@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170922_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170922_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170922_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20170922_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH-GRID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh-grid1 .
+  gs_stable-row = 'X'.
+  gs_stable-col = 'X'.
+
+  CALL METHOD go_grid1-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = gs_stable
+      i_soft_refresh = space.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0135   text</font>
+<font color ="#0000FF">*      --&gt;P_0136   text</font>
+<font color ="#0000FF">*      --&gt;P_0137   text</font>
+<font color ="#0000FF">*      --&gt;P_0138   text</font>
+<font color ="#0000FF">*      --&gt;P_0139   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat2  USING   p_key p_fieldname p_coltext p_ref_table p_ref_field.
+
+  gs_fcat2-key       = p_key.
+  gs_fcat2-fieldname = p_fieldname.
+  gs_fcat2-coltext   = p_coltext.
+  gs_fcat2-ref_table = p_ref_table.
+  gs_fcat2-ref_field = p_ref_field.
+
+  CASE p_fieldname.
+    WHEN 'PRICE'.
+      gs_fcat2-cfieldname = 'CURRENCY'.
+  ENDCASE.
+
+  APPEND  gs_fcat2 TO gt_fcat2.
+  CLEAR   gs_fcat2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0041   text</font>
+<font color ="#0000FF">*      --&gt;P_0042   text</font>
+<font color ="#0000FF">*      --&gt;P_0043   text</font>
+<font color ="#0000FF">*      --&gt;P_0044   text</font>
+<font color ="#0000FF">*      --&gt;P_0045   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat1  USING : p_key p_fieldname p_coltext p_ref_table p_ref_field.
+
+  gs_fcat1-key       = p_key.
+  gs_fcat1-fieldname = p_fieldname.
+  gs_fcat1-coltext   = p_coltext.
+  gs_fcat1-ref_table = p_ref_table.
+  gs_fcat1-ref_field = p_ref_field.
+
+  APPEND  gs_fcat1 TO gt_fcat1.
+  CLEAR   gs_fcat1.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH-GRID2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh-grid2 .
+  gs_stable-row = 'X'.
+  gs_stable-col = 'X'.
+
+  CALL METHOD go_grid2-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = gs_stable
+      i_soft_refresh = space.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXCLUDE_TOOLBAR1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM exclude_toolbar1 .
+  gs_toolbar1 = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND gs_toolbar1 TO gt_toolbar1.
+  gs_toolbar1 = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND gs_toolbar1 TO gt_toolbar1.
+  gs_toolbar1 = cl_gui_alv_grid=&gt;mc_fc_current_variant.
+  APPEND gs_toolbar1 TO gt_toolbar1.
+
+  CLEAR gs_toolbar1.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXCLUDE_TOOLBAR2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM exclude_toolbar2 .
+  gs_toolbar2 = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND gs_toolbar2 TO gt_toolbar2.
+  gs_toolbar2 = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND gs_toolbar2 TO gt_toolbar2.
+  gs_toolbar2 = cl_gui_alv_grid=&gt;mc_fc_current_variant.
+  APPEND gs_toolbar2 TO gt_toolbar2.
+
+  CLEAR gs_toolbar2.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_SCARR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_scarr .
+  CLEAR : gt_scarr, gt_scarr[].
+  SELECT carrid carrname currcode url
+    INTO CORRESPONDING FIELDS OF TABLE gt_scarr
+    FROM scarr
+    WHERE carrid EQ gv_carrid1.
+
+  IF sy-subrc NE 0.
+    MESSAGE s000 WITH 'Data not found' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_SFLIGHT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_sflight .
+  CLEAR : gt_sflight, gt_sflight[].
+  SELECT carrid connid fldate price currency planetype
+    INTO CORRESPONDING FIELDS OF TABLE gt_sflight
+    FROM sflight
+    WHERE carrid EQ gv_carrid2.
+
+  IF sy-subrc NE 0.
+    MESSAGE s000 WITH 'Data not found' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170911_02_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170911_02_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170911_02_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20170911_02_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+  CLEAR : gt_data, gt_data[].
+
+  SELECT bukrs belnr gjahr blart budat bktxt
+  INTO CORRESPONDING FIELDS OF TABLE gt_data
+  FROM bkpf
+  WHERE gjahr EQ p_gjahr
+  AND bukrs EQ p_bukrs
+  AND belnr IN s_belnr.
+
+  IF sy-subrc &lt;&gt; 0.
+<font color ="#0000FF">*    MESSAGE 'Data not found' TYPE 'S' DISPLAY LIKE 'E'.</font>
+    MESSAGE s000 WITH 'Data not found'.
+    LEAVE LIST-PROCESSING.
+  ENDIF.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0021   text</font>
+<font color ="#0000FF">*      --&gt;P_0022   text</font>
+<font color ="#0000FF">*      --&gt;P_0023   text</font>
+<font color ="#0000FF">*      --&gt;P_0024   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat  USING     p_key p_field p_text p_ref_table.
+
+  gs_fcat-key = p_key.
+  gs_fcat-fieldname = p_field.
+  gs_fcat-coltext = p_text.
+  gs_fcat-ref_table = p_ref_table.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR : gs_fcat.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DOUBLE_HANDLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_ROW  text</font>
+<font color ="#0000FF">*      --&gt;P_E_COLUMN  text</font>
+<font color ="#0000FF">*      --&gt;P_ES_ROW_NO  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM double_handle  USING    p_row_id STRUCTURE lvc_s_row
+                             p_column STRUCTURE lvc_s_col
+                             pe_row_no STRUCTURE lvc_s_roid.
+
+
+  READ TABLE gt_data INDEX p_row_id-index.
+
+  IF sy-subrc EQ 0.
+<font color ="#0000FF">*      MESSAGE gt_data-belnr TYPE 'I'.</font>
+    SET PARAMETER ID : 'ELN' FIELD gt_data-belnr,
+                       'BUK' FIELD gt_data-bukrs,
+                       'GJR' FIELD gt_data-gjahr.
+    " 필드의 상세정보 페이지를 형성
+    CALL TRANSACTION 'FB03' AND SKIP FIRST SCREEN.
+    "첫 화면을 지나치고 상세내역을 바로 볼 수 있게끔
+
+  ENDIF.
+
+
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

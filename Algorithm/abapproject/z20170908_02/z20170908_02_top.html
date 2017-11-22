@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170908_02_TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170908_02_TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  자재예약 현황 조회</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include Z20170908_02_TOP                                  Report Z20170908_02</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT z20170908_02.
+
+TABLES : resb.
+
+DATA : BEGIN OF gt_data OCCURS 0,
+         rsnum      LIKE resb-rsnum,
+         rspos      LIKE resb-rspos,
+         rsart      LIKE resb-rsart,
+         bdart      LIKE resb-bdart,
+         matnr      LIKE resb-matnr,
+         maktx      LIKE makt-maktx,
+         werks      LIKE resb-werks,
+         werks_name LIKE t001w-name1,
+         charg      LIKE resb-charg,
+         bdmng      LIKE resb-bdmng,
+         meins      LIKE resb-meins,
+
+       END OF gt_data.
+
+RANGES : gr_rsart FOR resb-rsart.
+
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_grid      TYPE REF TO cl_gui_alv_grid,
+       gs_fcat      TYPE lvc_s_fcat,
+       gt_fcat      TYPE lvc_t_fcat,
+       gs_layout    TYPE lvc_s_layo,
+       gs_scol      TYPE lvc_s_scol,
+       gs_variant   TYPE disvariant.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170926</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170926</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  ABAP Final Test</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report  Z20170926</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="z20170926_top.html">z20170926_top</a>.    " global Data
+
+include <a href ="z20170926_scr.html">z20170926_scr</a>.  " Select Screen
+include <a href ="z20170926_cls.html">z20170926_cls</a>.  " Class
+include <a href ="z20170926_o01.html">z20170926_o01</a>.  " PBO-Modules
+include <a href ="z20170926_i01.html">z20170926_i01</a>.  " PAI-Modules
+include <a href ="z20170926_f01.html">z20170926_f01</a>.  " FORM-Routines
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR s_bukrs-low.
+  PERFORM get_bukrs USING 'S_BUKRS-LOW'.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR s_bukrs-high.
+  PERFORM get_bukrs USING 'S_BUKRS-HIGH'.
+
+<font color ="#0000FF">*AT SELECTION-SCREEN OUTPUT.</font>
+<font color ="#0000FF">*  PERFORM modify_screen.</font>
+
+START-OF-SELECTION.
+PERFORM get_data.
+PERFORM get_data2.
+
+CALL SCREEN '0100'.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* 0100 --&gt; ABAP Final Test</font>
+<font color ="#0000FF">* 0102 --&gt; TextEdit Screen</font>
+<font color ="#0000FF">* 0104 --&gt; Popup Screen</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* 001 Search Reqirements</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* S_BUKRS D       .</font>
+<font color ="#0000FF">* S_MATNR D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Hard coded</font>
+<font color ="#0000FF">*   No data found</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: OO</font>
+<font color ="#0000FF">*000   & & & &</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

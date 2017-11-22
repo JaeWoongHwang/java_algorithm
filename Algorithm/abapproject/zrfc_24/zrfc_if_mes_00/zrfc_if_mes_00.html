@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZRFC_IF_MES_00</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for function: ZRFC_IF_MES_00</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  RFC I/F MES</b></font>
+<hr>
+<pre width="100">
+FUNCTION ZRFC_IF_MES_00.
+<font color ="#0000FF">*"----------------------------------------------------------------------</font>
+<font color ="#0000FF">*"*"Local Interface:</font>
+<font color ="#0000FF">*"  EXPORTING</font>
+<font color ="#0000FF">*"     VALUE(O_RESULT) TYPE  CHAR1</font>
+<font color ="#0000FF">*"     VALUE(O_MSG) TYPE  CHAR100</font>
+<font color ="#0000FF">*"  TABLES</font>
+<font color ="#0000FF">*"      IT_TAB STRUCTURE  ZPPG0150ST</font>
+<font color ="#0000FF">*"----------------------------------------------------------------------</font>
+
+<font color ="#0000FF">*       <a href ="global-zrfc_if_mes_00.html">Global data declarations</a></font>
+
+  DATA: LT_015T TYPE TABLE OF ZPPG0150T WITH HEADER LINE.
+
+
+  LOOP AT IT_TAB.
+    MOVE-CORRESPONDING IT_TAB TO LT_015T.
+    LT_015T-USERID = SY-UNAME.
+
+    APPEND LT_015T.
+
+    CLEAR : LT_015T, IT_TAB.
+  ENDLOOP.
+
+
+  MODIFY ZPPG0150T FROM TABLE LT_015T.
+  IF SY-SUBRC = 0.
+    O_RESULT = 'S'.
+  ELSE.
+    O_RESULT = 'E'.
+    O_MSG = 'insert error~'.
+  ENDIF.
+
+
+ENDFUNCTION.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

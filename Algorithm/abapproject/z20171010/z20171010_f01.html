@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20171010_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20171010_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20171010_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20171010_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+  CLEAR : gt_data, gt_data[].
+  SELECT bukrs werks matnr menge meins
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    FROM ztui524_02
+    WHERE matnr IN s_matnr.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH-GRID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh-grid .
+  gs_stable-row = 'X'.
+  gs_stable-col = 'X'.
+
+  CALL METHOD go_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = gs_stable
+      i_soft_refresh = space.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0071   text</font>
+<font color ="#0000FF">*      --&gt;P_0072   text</font>
+<font color ="#0000FF">*      --&gt;P_0073   text</font>
+<font color ="#0000FF">*      --&gt;P_0074   text</font>
+<font color ="#0000FF">*      --&gt;P_0075   text</font>
+<font color ="#0000FF">*      --&gt;P_0076   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat   USING : p_key p_fieldname p_coltext p_ref_table p_ref_field p_edit.
+
+  gs_fcat-key       = p_key.
+  gs_fcat-fieldname = p_fieldname.
+  gs_fcat-coltext   = p_coltext.
+  gs_fcat-ref_table = p_ref_table.
+  gs_fcat-ref_field = p_ref_field.
+  gs_fcat-edit      = p_edit.
+
+  CASE gs_fcat-fieldname.
+    WHEN 'MENGE'.
+      gs_fcat-cfieldname = 'MEINS'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR : gs_fcat.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SAVE_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM save_data .
+  CALL METHOD go_grid-&gt;check_changed_data.
+
+  IF gt_data[] IS NOT INITIAL.
+    "INSERT ztedu24_01 FROM TABLE gt_data. itab으로 부터 insert하겠다는 의미. 하지만 잘사용하지 않음
+    MODIFY ztui524_02 FROM TABLE gt_data. "기존에 데이터가 없으면 추가, 있으면 업데이트 시켜줌
+
+    IF sy-subrc EQ 0.
+      COMMIT WORK AND WAIT."커밋 시 중복을 방지하고 순서를 지키기 위함. 동시 트랜젝션시 먼저 기다리고 커밋하겠다는 의미
+      MESSAGE s000 WITH 'Save Success'.
+
+      PERFORM get_data.
+
+    ELSE.
+      ROLLBACK WORK.
+      MESSAGE s000 WITH 'Save Fail' DISPLAY LIKE 'E'.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DELETE_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM delete_data .
+  DATA : lt_del TYPE TABLE OF ztui524_02 WITH HEADER LINE.
+  " 지울 데이터를 담을 테이블을 선언
+  CLEAR : lt_del, lt_del[], gs_row, gt_row.
+
+  CALL METHOD go_grid-&gt;get_selected_rows
+    IMPORTING
+      et_index_rows = gt_row.
+
+  IF gt_row IS INITIAL.
+    MESSAGE s000 WITH 'Please Select Row' DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  LOOP AT gt_row INTO gs_row.
+    READ TABLE gt_data INDEX gs_row-index.
+
+    IF sy-subrc EQ 0.
+      MOVE-CORRESPONDING gt_data TO lt_del.
+
+      APPEND lt_del.
+      CLEAR lt_del.
+    ENDIF.
+  ENDLOOP.
+
+  IF lt_del[] IS NOT INITIAL.
+    DELETE ztui524_02 FROM TABLE lt_del.
+    " delete는 삭제가 목적이기 때문에 키만 있으면 됨.
+    IF sy-subrc EQ 0.
+      COMMIT WORK AND WAIT.
+      MESSAGE s000 WITH 'Delete Success'.
+      PERFORM get_data.
+    ELSE.
+      ROLLBACK WORK.
+      MESSAGE s000 WITH 'Delete Fail' DISPLAY LIKE 'E'.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_COMPANY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0023   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_company  USING p_fieldname.
+
+  DATA : BEGIN OF lt_matnr OCCURS 0,
+           matnr LIKE makt-matnr,
+           maktx LIKE makt-maktx,
+         END OF lt_matnr.
+
+  CLEAR : lt_matnr, lt_matnr[].
+
+  SELECT matnr maktx
+    INTO CORRESPONDING FIELDS OF TABLE lt_matnr
+    FROM makt.
+
+  IF sy-subrc NE 0.
+    MESSAGE s000 WITH 'No Company data found'.
+    EXIT.
+  ENDIF.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'MATNR'
+      "return field를 의미
+      dynpprog        = sy-repid
+      "프로그램 네임을 넣어라. 프로그램 네임은 sy-repid에 있음
+      dynpnr          = sy-dynnr
+      "화면 번호
+      dynprofield     = p_fieldname
+      "화면 필드이름을 알려줘야 함
+      window_title    = 'Material Number'
+      value_org       = 'S'
+      "C 는 cell by cell S는 structured. 우리는 주로 S로 가져옴
+    TABLES
+      value_tab       = lt_matnr[]
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+  IF sy-subrc &lt;&gt; 0.
+<font color ="#0000FF">* Implement suitable error handling here</font>
+  ENDIF.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

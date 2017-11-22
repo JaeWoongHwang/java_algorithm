@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170915_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170915_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170915_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20170915_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data.
+
+  SELECT a~matnr b~werks c~name1 AS werks_name d~maktx a~mtart
+    e~mtbez AS mtart_desc a~matkl f~wgbez AS matkl_desc b~pstat b~ekgrp a~spart
+   INTO CORRESPONDING FIELDS OF TABLE gt_data
+   FROM mara AS a
+  INNER JOIN marc AS b
+     ON a~matnr = b~matnr
+  INNER JOIN t001w AS c
+     ON b~werks = c~werks
+  INNER JOIN makt AS d
+     ON a~matnr = d~matnr
+    AND d~spras = 'EN'
+  INNER JOIN t134t AS e
+     ON a~mtart = e~mtart
+    AND e~spras = 'EN'
+  INNER JOIN t023t AS f
+     ON a~matkl = f~matkl
+    AND f~spras = 'EN'
+  WHERE a~mtart EQ p_mtart
+    AND a~matnr IN s_matnr
+    AND b~werks IN s_werks.
+
+
+  IF sy-subrc &lt;&gt; 0.
+    MESSAGE s000 WITH 'NO DATA FOUND' DISPLAY LIKE 'E'.
+    LEAVE LIST-PROCESSING.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  SET_FIELD  OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE set_field OUTPUT.
+  CLEAR : gs_fcat, gt_fcat.
+  PERFORM set_fcat USING : 'X' 'MATNR'        '자재코드'      'MARA'  'MATNR',
+                           'X' 'WERKS'        '플랜트'        'MARC'  'WERKS',
+                           ' ' 'WERKS_NAME'   '플랜트 명'     'T001W' 'NAME1',
+                           ' ' 'MAKTX'        '자재내역'      'MAKT'  'MAKTX',
+                           ' ' 'MTART'        '자재유형'      'MARA'  'MTART',
+                           ' ' 'MTART_DESC'   '자재유형 내역' 'T134T' 'MTBEZ',
+                           ' ' 'MATKL'        '자재그룹'      'MARA'  'MATKL',
+                           ' ' 'MATKL_DESC'   '자재그룹 내역' 'T023T' 'WGBEZ',
+                           ' ' 'PSTAT'        '유지보수 상태' 'MARC'  'PSTAT',
+                           ' ' 'EKGRP'        '구매그룹'      'MARC'  'EKGRP',
+                           ' ' 'SPART'        '판매조직'      'MARA'  'SPART'.
+
+
+  gs_layout-zebra = 'X'.
+  gs_layout-sel_mode = 'D'.
+  gs_layout-cwidth_opt = 'X'.
+  gs_variant-report = sy-repid.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0130   text</font>
+<font color ="#0000FF">*      --&gt;P_0131   text</font>
+<font color ="#0000FF">*      --&gt;P_0132   text</font>
+<font color ="#0000FF">*      --&gt;P_0133   text</font>
+<font color ="#0000FF">*      --&gt;P_0134   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat  USING  p_key p_fieldname p_coltext p_ref_table p_ref_field.
+
+  gs_fcat-key       = p_key.
+  gs_fcat-fieldname = p_fieldname.
+  gs_fcat-coltext   = p_coltext.
+  gs_fcat-ref_table = p_ref_table.
+  gs_fcat-ref_field = p_ref_field.
+
+  CASE p_fieldname.
+    WHEN 'MATNR'.
+      gs_fcat-hotspot = 'X'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR : gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  HOTSPOT_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_ROW_ID  text</font>
+<font color ="#0000FF">*      --&gt;P_E_COLUMN_ID  text</font>
+<font color ="#0000FF">*      --&gt;P_ES_ROW_NO  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM hotspot_handler  USING p_row_id STRUCTURE lvc_s_row.
+
+  READ TABLE gt_data INDEX p_row_id-index.
+
+  IF sy-subrc = 0.
+
+    CLEAR : gt_data_pop, gt_data_pop[].
+
+    SELECT a~matnr b~maktx a~lgort c~lgobe
+      INTO CORRESPONDING FIELDS OF TABLE gt_data_pop
+      FROM mard AS a
+      LEFT OUTER JOIN makt AS b
+        ON a~matnr = b~matnr
+       AND b~spras = 'EN'
+      INNER JOIN t001l AS c
+        ON a~werks  = c~werks
+       AND a~lgort  = c~lgort
+     WHERE a~matnr = gt_data-matnr
+       AND  a~werks	= gt_data-werks.
+
+    IF sy-subrc &lt;&gt; 0.
+      MESSAGE s000 WITH 'Data Not Found' DISPLAY LIKE 'E'..
+      EXIT.
+
+    ELSEIF sy-subrc = 0.
+      LOOP AT gt_data_pop.
+        gt_data_pop-spart = gt_data-spart.
+        MODIFY gt_data_pop INDEX sy-tabix TRANSPORTING spart.
+      ENDLOOP.
+    ENDIF.
+
+    CALL SCREEN '0101' STARTING AT 20 3.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DOUBLE_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_ROW  text</font>
+<font color ="#0000FF">*      --&gt;P_E_COLUMN  text</font>
+<font color ="#0000FF">*      --&gt;P_ES_ROW_NO  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM double_handler USING  p_e_row_id  STRUCTURE lvc_s_row.
+
+  READ TABLE gt_data INDEX p_e_row_id-index.
+
+  IF sy-subrc EQ 0.
+    SET PARAMETER ID : 'MAT' FIELD gt_data-matnr.
+    CALL TRANSACTION 'MM03' AND SKIP FIRST SCREEN.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXCLUDE_TOOLBAR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM exclude_toolbar .
+  gs_toolbar = cl_gui_alv_grid=&gt;mc_fc_excl_all.
+
+  APPEND gs_toolbar TO gt_toolbar.
+  CLEAR gs_toolbar.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT_POP</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0086   text</font>
+<font color ="#0000FF">*      --&gt;P_0087   text</font>
+<font color ="#0000FF">*      --&gt;P_0088   text</font>
+<font color ="#0000FF">*      --&gt;P_0089   text</font>
+<font color ="#0000FF">*      --&gt;P_0090   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat_pop  USING   p_key p_fieldname p_coltext p_ref_table p_ref_field.
+
+  gs_fcat_pop-key       = p_key.
+  gs_fcat_pop-fieldname = p_fieldname.
+  gs_fcat_pop-coltext   = p_coltext.
+  gs_fcat_pop-ref_table = p_ref_table.
+  gs_fcat_pop-ref_field = p_ref_field.
+
+  APPEND gs_fcat_pop TO gt_fcat_pop.
+  CLEAR gs_fcat_pop.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH_GRID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh_grid .
+  gs_stable-row = 'X'.
+  gs_stable-col = 'X'.
+
+  CALL METHOD go_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = gs_stable
+      i_soft_refresh = ' '.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

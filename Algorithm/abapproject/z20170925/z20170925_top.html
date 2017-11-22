@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170925_TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170925_TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170925_TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include Z20170925_TOP                                     Report Z20170925</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT z20170925 MESSAGE-ID oo.
+
+DATA : gt_bdcdata TYPE TABLE OF bdcdata,
+       gs_bdcdata LIKE bdcdata,
+       gt_messtab LIKE bdcmsgcoll OCCURS 0 WITH HEADER LINE,
+       gs_param   TYPE ctu_params.
+
+DATA : gv_okcode LIKE sy-ucomm.
+
+
+DATA : gv_kostl_fr   LIKE csks-kostl,
+       gv_kostl_to   LIKE csks-kostl,
+       gv_kstar      LIKE cska-kstar,
+       gv_amount(15),
+       gv_currency   TYPE waers.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

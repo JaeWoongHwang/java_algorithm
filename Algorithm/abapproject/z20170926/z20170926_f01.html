@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170926_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170926_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170926_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20170926_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+  CLEAR : gt_data, gt_data[].
+
+  SELECT bukrs werks matnr kostl prctr mtart matkl menge meins dmbtr waers
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    FROM ztproj_24_01
+    WHERE bukrs IN s_bukrs
+      AND matnr IN s_matnr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SAVE_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM save_data .
+  CALL METHOD go_grid1-&gt;check_changed_data.
+
+  IF gt_data[] IS NOT INITIAL.
+
+    MODIFY ztproj_24_01 FROM TABLE gt_data.
+
+    IF sy-subrc EQ 0.
+      COMMIT WORK AND WAIT.
+      MESSAGE s000 WITH 'Save Success'.
+
+      PERFORM get_data.
+
+    ELSE.
+      ROLLBACK WORK.
+      MESSAGE s000 WITH 'Save Fail' DISPLAY LIKE 'E'.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DELETE_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM delete_data .
+  DATA : lt_del TYPE TABLE OF ztproj_24_01 WITH HEADER LINE.
+
+  CLEAR : lt_del, lt_del[], gs_row, gt_row.
+
+  CALL METHOD go_grid1-&gt;get_selected_rows
+    IMPORTING
+      et_index_rows = gt_row.
+
+  IF gt_row IS INITIAL.
+    MESSAGE s000 WITH 'Please Select Row' DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  LOOP AT gt_row INTO gs_row.
+    READ TABLE gt_data INDEX gs_row-index.
+
+    IF sy-subrc EQ 0.
+      MOVE-CORRESPONDING gt_data TO lt_del.
+
+      APPEND lt_del.
+      CLEAR lt_del.
+    ENDIF.
+  ENDLOOP.
+
+  IF lt_del[] IS NOT INITIAL.
+    DELETE ztproj_24_01 FROM TABLE lt_del.
+
+    IF sy-subrc EQ 0.
+      COMMIT WORK AND WAIT.
+      MESSAGE s000 WITH 'Delete Success'.
+      PERFORM get_data.
+    ELSE.
+      ROLLBACK WORK.
+      MESSAGE s000 WITH 'Delete Fail' DISPLAY LIKE 'E'.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH-GRID1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh-grid1 .
+  gs_stable-row = 'X'.
+  gs_stable-col = 'X'.
+
+  CALL METHOD go_grid1-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = gs_stable
+      i_soft_refresh = space.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0209   text</font>
+<font color ="#0000FF">*      --&gt;P_0210   text</font>
+<font color ="#0000FF">*      --&gt;P_0211   text</font>
+<font color ="#0000FF">*      --&gt;P_0212   text</font>
+<font color ="#0000FF">*      --&gt;P_0213   text</font>
+<font color ="#0000FF">*      --&gt;P_0214   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat1  USING : p_key p_fieldname p_coltext p_ref_table p_ref_field p_edit.
+
+  gs_fcat1-key       = p_key.
+  gs_fcat1-fieldname = p_fieldname.
+  gs_fcat1-coltext   = p_coltext.
+  gs_fcat1-ref_table = p_ref_table.
+  gs_fcat1-ref_field = p_ref_field.
+  gs_fcat1-edit      = p_edit.
+
+  APPEND  gs_fcat1 TO gt_fcat1.
+  CLEAR   gs_fcat1.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  LOAD_EDIT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM load_edit .
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SAVE_EDIT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM save_edit .
+  DATA : lt_save TYPE TABLE OF ztproj_24_02 WITH HEADER LINE.
+
+  DATA: BEGIN OF lt_text OCCURS 0,
+          line_text(1000),
+        END OF lt_text.
+
+  CLEAR : lt_text, lt_text[], lt_save, lt_save[].
+
+  CALL METHOD go_edit2-&gt;get_text_as_r3table
+    IMPORTING
+      table                  = lt_text[]
+    EXCEPTIONS
+      error_dp               = 1
+      error_cntl_call_method = 2
+      error_dp_create        = 3
+      potential_data_loss    = 4
+      OTHERS                 = 5.
+
+  "데이터베이스에 데이터를 넣기
+  lt_save-seq  = gv_seq.
+  lt_save-name = gv_name.
+
+  LOOP AT lt_text.
+    CONCATENATE lt_save-contents lt_text-line_text cl_abap_char_utilities=&gt;newline
+    " 그냥 저장한다면 줄바꿈이 인식되지 않고 하나의 string으로만 저장됨
+    " 그래서 ABAP 내부에서 줄바꿈을 위한 이벤트가 따로 있음 cl_abap_char_utilities=&gt;newline
+    INTO lt_save-contents.
+  ENDLOOP.
+
+  APPEND lt_save.
+  CLEAR lt_save.
+
+  MODIFY ztproj_24_02 FROM TABLE lt_save.
+
+  IF sy-subrc EQ 0.
+    COMMIT WORK AND WAIT.
+    MESSAGE s000 WITH 'Save Success'.
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE s000 WITH 'Save fail' DISPLAY LIKE 'E'.
+  ENDIF .
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data2 .
+  CLEAR : gt_data2, gt_data2[].
+
+  SELECT seq name contents
+    INTO CORRESPONDING FIELDS OF TABLE gt_data2
+    FROM ztproj_24_02.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH_GRID3</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh_grid3 .
+  gs_stable-row = 'X'.
+  gs_stable-col = 'X'.
+
+  CALL METHOD go_grid3-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = gs_stable
+      i_soft_refresh = space.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT3</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0279   text</font>
+<font color ="#0000FF">*      --&gt;P_0280   text</font>
+<font color ="#0000FF">*      --&gt;P_0281   text</font>
+<font color ="#0000FF">*      --&gt;P_0282   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat3  USING  : p_key p_field p_text p_ref_table.
+
+  gs_fcat3-key          = p_key.
+  gs_fcat3-fieldname    = p_field.
+  gs_fcat3-coltext      = p_text.
+  gs_fcat3-ref_table    = p_ref_table.
+
+  APPEND gs_fcat3 TO gt_fcat3.
+  CLEAR gs_fcat3.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DOUBLE_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_ROW  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM double_handler  USING    p_row      STRUCTURE lvc_s_row
+                              p_column   STRUCTURE lvc_s_col
+                              ps_row_no  STRUCTURE lvc_s_roid.
+
+
+  READ TABLE gt_data2 INDEX p_row-index.
+
+  IF sy-subrc EQ 0.
+    CALL SCREEN '0104' STARTING AT 20 3.
+  ELSE.
+    MESSAGE 'No data found' TYPE 'S' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_BUKRS</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0022   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_bukrs  USING p_field.
+  DATA : BEGIN OF lt_bukrs OCCURS 0,
+           bukrs LIKE t001-bukrs,
+           butxt LIKE t001-butxt,
+         END OF lt_bukrs.
+
+  CLEAR : lt_bukrs, lt_bukrs[].
+
+  SELECT bukrs butxt
+    INTO CORRESPONDING FIELDS OF TABLE lt_bukrs
+    FROM t001.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'BUKRS'
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = p_field
+      window_title    = 'Company Code List'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_bukrs[]
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_EDIT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_edit .
+  DATA : BEGIN OF lt_text OCCURS 0,
+           line_text(100),
+         END OF lt_text.
+
+  CLEAR : lt_text, lt_text[].
+
+  SPLIT gt_data2-contents AT cl_abap_char_utilities=&gt;newline
+  INTO TABLE lt_text.
+
+  CALL METHOD go_edit2-&gt;set_text_as_r3table
+    EXPORTING
+      table           = lt_text[]
+    EXCEPTIONS
+      error_dp        = 1
+      error_dp_create = 2
+      OTHERS          = 3.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

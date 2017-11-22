@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170913_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170913_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170913_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20170913_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+  CLEAR : gt_data_01, gt_data_01[].
+
+<font color ="#0000FF">*  SELECT a~mjahr a~mblnr b~zeile a~vgart a~budat b~bwart b~matnr</font>
+<font color ="#0000FF">*         c~maktx b~werks d~name1 AS werks_name b~dmbtr b~waers b~menge b~meins</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE gt_data</font>
+<font color ="#0000FF">*  FROM mkpf AS a</font>
+<font color ="#0000FF">*  INNER JOIN mseg AS b</font>
+<font color ="#0000FF">*  ON a~mblnr = b~mblnr</font>
+<font color ="#0000FF">*  AND a~mjahr = b~mjahr</font>
+<font color ="#0000FF">*  INNER JOIN makt AS c</font>
+<font color ="#0000FF">*  ON b~matnr = c~matnr</font>
+<font color ="#0000FF">*  INNER JOIN t001w AS d</font>
+<font color ="#0000FF">*  ON b~werks = d~werks</font>
+<font color ="#0000FF">*  WHERE a~mjahr EQ p_mjahr</font>
+<font color ="#0000FF">*  AND a~mblnr IN s_mblnr.</font>
+
+
+CREATE OBJECT go_mseg.
+
+  CALL METHOD go_mseg-&gt;get_mseg
+    EXPORTING
+      e_mjahr   = p_mjahr
+      e_mblnr_l = s_mblnr-low
+      e_mblnr_h = s_mblnr-high
+    IMPORTING
+      it_list   = gt_data_01[].
+
+  IF gt_data_01[] IS INITIAL.
+    MESSAGE s000 WITH 'Data not found'.
+    LEAVE LIST-PROCESSING.
+  ENDIF.
+
+  PERFORM data_color.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0021   text</font>
+<font color ="#0000FF">*      --&gt;P_0022   text</font>
+<font color ="#0000FF">*      --&gt;P_0023   text</font>
+<font color ="#0000FF">*      --&gt;P_0024   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat  USING   p_key p_field p_text p_ref_table.
+
+  gs_fcat-key       = p_key.
+  gs_fcat-fieldname = p_field.
+  gs_fcat-coltext   = p_text.
+  gs_fcat-ref_table = p_ref_table.
+
+  CASE gs_fcat-fieldname.
+    WHEN 'WERKS_NAME'.
+      gs_fcat-ref_field = 'NAME1'.
+    WHEN 'DMBTR'.
+      gs_fcat-cfieldname = 'WAERS'.
+    WHEN 'MENGE'.
+      gs_fcat-qfieldname = 'MEINS'.
+
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR : gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DOUBLE_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_ROW  text</font>
+<font color ="#0000FF">*      --&gt;P_E_COLUMN  text</font>
+<font color ="#0000FF">*      --&gt;P_ES_ROW_NO  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM double_handler  USING  p_e_row_id     STRUCTURE lvc_s_row
+                            p_e_column_id  STRUCTURE lvc_s_col
+                            p_es_row_no    STRUCTURE lvc_s_roid.
+
+  READ TABLE gt_data_01 INDEX p_e_row_id-index.
+
+  IF sy-subrc EQ 0.
+
+    SET PARAMETER ID : 'MJA' FIELD gt_data_01-mjahr,
+                       'MBN' FIELD gt_data_01-mblnr.
+
+    CALL TRANSACTION 'MB03' AND SKIP FIRST SCREEN.
+
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DATA_COLOR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM data_color .
+<font color ="#0000FF">*MOVE-CORRESPONDING gt_data_01[] TO gt_data_02[].</font>
+ "위처럼 바디를 통해 데이터를 전달하면 데이터가 한번에 전달 되기 때문에 루프를 돌릴 필요가 없어짐
+  LOOP AT gt_data_01.
+    MOVE-CORRESPONDING gt_data_01 TO gt_data_02."밑에 것보다 권장
+<font color ="#0000FF">*gt_data_02[] = gt_data_01[]. 이런 형태면 두 테이블의 필드의 순서 크기가가 같아야 함.</font>
+    IF gt_data_02-vgart = 'WL'.
+      gt_data_02-color = 'C610'.
+    ENDIF.
+
+    APPEND gt_data_02.
+    CLEAR: gt_data_02.
+  ENDLOOP.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

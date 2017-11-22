@@ -1,0 +1,3216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZPPR0541_24_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZPPR0541_24_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZPPR0541_24_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           ZPPR0541_24_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           ZPPR0541_04_01_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_icon .
+  CALL FUNCTION 'ICON_CREATE'
+    EXPORTING
+      name                  = 'ICON_XXL'
+    IMPORTING
+      result                = sscrfields-functxt_01
+    EXCEPTIONS
+      icon_not_found        = 1
+      outputfield_too_short = 2
+      OTHERS                = 3.
+
+  CONCATENATE sscrfields-functxt_01 TEXT-000
+              INTO sscrfields-functxt_01. "SEPARATED BY SPACE.
+
+  DATA year LIKE p_year.
+<font color ="#0000FF">*####</font>
+  p_year = sy-datum(04) + 1.
+<font color ="#0000FF">*####</font>
+  IF sy-datum+04(02) = 12.
+    year = sy-datum(04) + 1.
+    CONCATENATE year '01' INTO p_month.
+  ELSE.
+    p_month = sy-datum(06) + 1.
+  ENDIF.
+
+
+
+ENDFORM. " CREATE_ICON
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  F4_PBDNR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM f4_pbdnr USING p_pbdnr.
+  DATA : BEGIN OF lt_pbdnr OCCURS 0,
+           pbdnr LIKE pbim-pbdnr,
+         END OF lt_pbdnr.
+  RANGES : s_werks1 FOR mseg-werks.
+  DATA : l_window_title(30) TYPE c.
+  DATA : l_return_tab TYPE TABLE OF ddshretval,
+         l_return_wa  LIKE LINE OF  l_return_tab.
+  DATA : l_fieldname TYPE  lvc_fname.
+  DATA : p_pbdnr1 LIKE pbim-pbdnr.
+
+  DATA: lt_dynpread TYPE STANDARD TABLE OF dynpread .
+  DATA: lw_dynpread TYPE dynpread .
+
+  lw_dynpread-fieldname = 'S_WERKS-LOW'.
+  APPEND lw_dynpread TO lt_dynpread .
+
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname               = sy-repid
+      dynumb               = sy-dynnr
+    TABLES
+      dynpfields           = lt_dynpread
+    EXCEPTIONS
+      invalid_abapworkarea = 1
+      invalid_dynprofield  = 2
+      invalid_dynproname   = 3
+      invalid_dynpronummer = 4
+      invalid_request      = 5
+      no_fielddescription  = 6
+      invalid_parameter    = 7
+      undefind_error       = 8
+      double_conversion    = 9
+      stepl_not_found      = 10
+      OTHERS               = 11.
+  IF sy-subrc &lt;&gt; 0.
+<font color ="#0000FF">* Implement suitable error handling here</font>
+  ENDIF.
+
+  CLEAR : s_werks1 ,s_werks1[].
+  LOOP AT lt_dynpread INTO lw_dynpread.
+
+    CASE lw_dynpread-fieldname.
+      WHEN 'S_WERKS-LOW'.
+        IF  lw_dynpread-fieldvalue IS NOT INITIAL.
+          s_werks1-sign    = 'I'.
+          s_werks1-option  = 'EQ'.
+          s_werks1-low     = lw_dynpread-fieldvalue .
+          APPEND s_werks1.
+        ENDIF.
+    ENDCASE.
+  ENDLOOP.
+
+  CLEAR : lt_pbdnr, lt_pbdnr[].
+  SELECT pbdnr FROM pbim
+    INTO TABLE lt_pbdnr
+    WHERE werks IN s_werks.
+
+  DELETE lt_pbdnr WHERE pbdnr = ' '.
+
+  IF lt_pbdnr[] IS NOT INITIAL.
+    SORT lt_pbdnr BY pbdnr.
+    DELETE ADJACENT DUPLICATES FROM lt_pbdnr.
+    LOOP AT lt_pbdnr.
+      IF p_rad1 = 'X'.
+        IF lt_pbdnr-pbdnr(01) &lt;&gt; 'Y'.
+          DELETE lt_pbdnr .
+        ENDIF.
+      ELSEIF p_rad2 = 'X'.
+        IF lt_pbdnr-pbdnr(01) &lt;&gt; 'M'.
+          DELETE lt_pbdnr .
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+  ENDIF.
+
+
+  CLEAR l_fieldname.
+  l_fieldname = 'PBDNR'.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = l_fieldname
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      window_title    = l_window_title
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_pbdnr[]
+      return_tab      = l_return_tab
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+  IF sy-subrc = 0.
+    CLEAR l_return_wa.
+    READ TABLE l_return_tab INTO l_return_wa INDEX 1.
+    IF sy-subrc = 0.
+      p_pbdnr = l_return_wa-fieldval.
+    ENDIF.
+  ENDIF.
+ENDFORM. " F4_PBDNR
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  F4_YEAR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM f4_year .
+  CALL FUNCTION 'REAL_ESTATE_F4_YEAR'
+    EXPORTING
+      i_year        = p_year
+      i_popup_title = ' '
+    IMPORTING
+      e_year        = p_year.
+ENDFORM. " F4_YEAR
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  F4_MONTH</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM f4_month .
+  GET CURSOR FIELD mf_dynpfields-fieldname.
+  APPEND mf_dynpfields.
+  mf_hlp_repid = sy-repid.
+  DO 2 TIMES.
+    CALL FUNCTION 'DYNP_VALUES_READ'
+      EXPORTING
+        dyname               = mf_hlp_repid
+        dynumb               = sy-dynnr
+      TABLES
+        dynpfields           = mf_dynpfields
+      EXCEPTIONS
+        invalid_abapworkarea = 01
+        invalid_dynprofield  = 02
+        invalid_dynproname   = 03
+        invalid_dynpronummer = 04
+        invalid_request      = 05
+        no_fielddescription  = 06
+        undefind_error       = 07.
+    IF sy-subrc = 3.
+<font color ="#0000FF">*     Aktuelles Dynpro ist Wertemengenbild</font>
+      mf_hlp_repid = 'SAPLALDB'.
+    ELSE.
+      READ TABLE mf_dynpfields INDEX 1.
+<font color ="#0000FF">*     Unterstriche durch Blanks ersetzen</font>
+      TRANSLATE mf_dynpfields-fieldvalue USING '_ '.
+      EXIT.
+    ENDIF.
+  ENDDO.
+  IF sy-subrc = 0.
+<font color ="#0000FF">*   Konvertierung ins interne Format</font>
+    CALL FUNCTION 'CONVERSION_EXIT_PERI_INPUT'
+      EXPORTING
+        input         = mf_dynpfields-fieldvalue
+      IMPORTING
+        output        = mf_monat
+      EXCEPTIONS
+        error_message = 1.
+    IF mf_monat IS INITIAL.
+<font color ="#0000FF">*     Monat ist initial =&gt; Vorschlagswert aus akt. Datum ableiten</font>
+      mf_monat = sy-datlo(6).
+    ENDIF.
+    CALL FUNCTION 'POPUP_TO_SELECT_MONTH'
+      EXPORTING
+        actual_month               = mf_monat
+      IMPORTING
+        selected_month             = mf_monat
+        return_code                = mf_returncode
+      EXCEPTIONS
+        factory_calendar_not_found = 01
+        holiday_calendar_not_found = 02
+        month_not_found            = 03.
+    IF sy-subrc = 0 AND mf_returncode = 0.
+<font color ="#0000FF">*     ASSIGN (MF_DYNPFIELDS-FIELDNAME) TO &lt;MF_FELD&gt;. " ==&gt;&gt; note 148804</font>
+<font color ="#0000FF">*     &lt;MF_FELD&gt; = MF_MONAT.</font>
+      CALL FUNCTION 'CONVERSION_EXIT_PERI_OUTPUT'
+        EXPORTING
+          input  = mf_monat
+        IMPORTING
+          output = mf_dynpfields-fieldvalue.
+      COLLECT mf_dynpfields.
+      CALL FUNCTION 'DYNP_VALUES_UPDATE'
+        EXPORTING
+          dyname               = mf_hlp_repid
+          dynumb               = sy-dynnr
+        TABLES
+          dynpfields           = mf_dynpfields
+        EXCEPTIONS
+          invalid_abapworkarea = 01
+          invalid_dynprofield  = 02
+          invalid_dynproname   = 03
+          invalid_dynpronummer = 04
+          invalid_request      = 05
+          no_fielddescription  = 06
+          undefind_error       = 07.           "&lt;&lt;== note 148804
+    ENDIF.
+  ENDIF.
+ENDFORM. " F4_MONTH
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  MODIFY_SCREEN</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM modify_screen .
+  LOOP AT SCREEN.
+    IF p_rad1 = 'X'.
+      IF  screen-group1 = 'M1'.
+        screen-active = 0.
+        MODIFY SCREEN.
+      ENDIF.
+    ENDIF.
+    IF p_rad2 = 'X'.
+      IF  screen-group1 = 'Y1'.
+        screen-active = 0.
+        MODIFY SCREEN.
+      ENDIF.
+    ENDIF.
+  ENDLOOP.
+ENDFORM. " MODIFY_SCREEN
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SCREEN_MESSAGE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM screen_message .
+
+  CASE sscrfields-ucomm.
+    WHEN 'FC01'.
+      PERFORM download_excle_template.
+  ENDCASE.
+
+<font color ="#0000FF">*  IF P_RAD1 = 'X'.</font>
+<font color ="#0000FF">*    IF P_PBDNR(01) &lt;&gt; 'Y'.</font>
+<font color ="#0000FF">*      MESSAGE TEXT-030 TYPE 'E'.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*  ELSEIF P_RAD2 = 'X'.</font>
+<font color ="#0000FF">*    IF P_PBDNR(01) &lt;&gt; 'M'.</font>
+<font color ="#0000FF">*      MESSAGE TEXT-031 TYPE 'E'.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*20121130 ###### ## ## ####</font>
+<font color ="#0000FF">*  IF P_RAD4 &lt;&gt; 'X'.</font>
+<font color ="#0000FF">*    SELECT SINGLE PLTGB</font>
+<font color ="#0000FF">*      INTO P_PLTGB</font>
+<font color ="#0000FF">*      FROM ZPPT026</font>
+<font color ="#0000FF">*      WHERE WERKS IN S_WERKS.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF P_PLTGB &lt;&gt; 'P'.</font>
+<font color ="#0000FF">*      MESSAGE TEXT-009 TYPE 'E'.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    SELECT SINGLE PLTGB PLTCH</font>
+<font color ="#0000FF">*    INTO (P_PLTGB , P_PLTCH)</font>
+<font color ="#0000FF">*    FROM ZPPT026</font>
+<font color ="#0000FF">*    WHERE WERKS IN S_WERKS.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF P_PLTGB = 'P' OR P_PLTCH = 'A'.</font>
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">*      MESSAGE TEXT-009 TYPE 'E'.</font>
+<font color ="#0000FF">*      STOP.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+
+ENDFORM. " SCREEN_MESSAGE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  F4_FILEPATH</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_P_FILE  text</font>
+<font color ="#0000FF">*      --&gt;P_0040   text</font>
+<font color ="#0000FF">*      --&gt;P_0041   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM f4_filepath USING p_path
+                           p_filter
+                           p_title.
+
+  call function <a href ="z_mm_get_file_name_04/z_mm_get_file_name_04.html">'Z_MM_GET_FILE_NAME_04'</a>
+    EXPORTING
+      i_filter   = p_filter
+      i_title    = p_title
+      i_def_path = p_path
+    IMPORTING
+      e_filename = p_path.
+
+  IF sy-subrc &lt;&gt; 0.
+    g_subrc = 'E'.
+  ENDIF.
+
+ENDFORM. " F4_FILEPATH
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DOWNLOAD_EXCLE_TEMPLATE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM download_excle_template .
+  DATA: l_filename   TYPE string,
+        l_path       TYPE string,
+        l_fullpath   TYPE string,
+        l_filelength TYPE i.
+  DATA: BEGIN OF wa_year OCCURS 0,
+          filed01(20) TYPE c VALUE 'DM Version',
+          filed02(20) TYPE c VALUE 'Material',
+          filed03(20) TYPE c VALUE 'Description',
+          filed04(20) TYPE c VALUE 'M1',
+          filed05(20) TYPE c VALUE 'M2',
+          filed06(20) TYPE c VALUE 'M3',
+          filed07(20) TYPE c VALUE 'M4',
+          filed08(20) TYPE c VALUE 'M5',
+          filed09(20) TYPE c VALUE 'M6',
+          filed10(20) TYPE c VALUE 'M7',
+          filed11(20) TYPE c VALUE 'M8',
+          filed12(20) TYPE c VALUE 'M9',
+          filed13(20) TYPE c VALUE 'M10',
+          filed14(20) TYPE c VALUE 'M11',
+          filed15(20) TYPE c VALUE 'M12',
+        END OF wa_year.
+
+  DATA : lt_year LIKE TABLE OF wa_year.
+
+  DATA: BEGIN OF wa_month OCCURS 0,
+          filed01(20) TYPE c VALUE 'DM Version',
+          filed02(20) TYPE c VALUE 'Material',
+          filed03(20) TYPE c VALUE 'Description',
+          filed04(20) TYPE c VALUE 'M1',
+          filed05(20) TYPE c VALUE 'M2',
+          filed06(20) TYPE c VALUE 'M3',
+          filed07(20) TYPE c VALUE 'M4',
+          filed08(20) TYPE c VALUE 'M5',
+        END OF wa_month.
+
+  DATA: lt_month LIKE TABLE OF wa_month.
+
+  INCLUDE ole2incl.
+
+  DATA: application TYPE ole2_object,
+        workbook    TYPE ole2_object,
+        sheet       TYPE ole2_object,
+        cells       TYPE ole2_object.
+
+  DATA: l_index(2) TYPE n.
+
+  DATA: l_field(20) TYPE c.
+
+  FIELD-SYMBOLS: &lt;value&gt;.
+
+  CREATE OBJECT application 'excel.application'.
+  SET PROPERTY OF application 'visible' = 1.
+  CALL METHOD OF
+    application
+      'Workbooks' = workbook.
+  CALL METHOD OF
+    workbook
+    'Add'.
+
+<font color ="#0000FF">* Create first Excel Sheet</font>
+  CALL METHOD OF
+      application
+      'Worksheets' = sheet
+    EXPORTING
+      #1           = 1.
+  CALL METHOD OF
+    sheet
+    'Activate'.
+  SET PROPERTY OF sheet 'NAME' = 'SHEET1'.
+<font color ="#0000FF">*  READ TABLE IT_TITLE INDEX 1.</font>
+  CLEAR l_index.
+  DO 70 TIMES.
+    ADD 1 TO l_index.
+    CALL METHOD OF
+        sheet
+        'Cells' = cells
+      EXPORTING
+        #1      = l_index.
+    IF p_rad1 = 'X'.
+      CONCATENATE 'WA_YEAR-FILED' l_index INTO l_field.
+    ELSEIF p_rad2 = 'X'.
+      CONCATENATE 'WA_MONTH-FILED' l_index INTO l_field.
+    ENDIF.
+    ASSIGN (l_field) TO &lt;value&gt;.
+    IF sy-subrc &lt;&gt; 0. EXIT. ENDIF.
+    SET PROPERTY OF cells 'Value' = &lt;value&gt;.
+  ENDDO.
+
+<font color ="#0000FF">* Save excel speadsheet to particular filename</font>
+  CALL METHOD OF
+    sheet
+    'SaveAs'
+    EXPORTING
+      #1 = 'c:\\exceldoc1.xls'
+      #2 = 1. "filename
+<font color ="#0000FF">*  fileFormat</font>
+
+  CHECK sy-subrc EQ 0.
+  CHECK NOT l_fullpath IS INITIAL.
+ENDFORM. " DOWNLOAD_EXCLE_TEMPLATE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_EXCEL_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_excel_data .
+
+  DATA : BEGIN OF lt_mara OCCURS 0,
+           matnr LIKE mara-matnr,
+           mtart LIKE mara-mtart,
+         END OF lt_mara.
+
+  DATA: it_raw TYPE truxs_t_text_data.
+  IF p_rad1 = 'X'.
+    CALL FUNCTION 'TEXT_CONVERT_XLS_TO_SAP'
+      EXPORTING
+<font color ="#0000FF">*       I_FIELD_SEPERATOR    =</font>
+        i_line_header        = 'X'
+        i_tab_raw_data       = it_raw
+        i_filename           = p_file
+      TABLES
+        i_tab_converted_data = year_upload
+      EXCEPTIONS
+        conversion_failed    = 1
+        OTHERS               = 2.
+    IF sy-subrc &lt;&gt; 0.
+      MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+    ENDIF.
+<font color ="#0000FF">*##### ###</font>
+<font color ="#0000FF">*## ### ### ### ### ##</font>
+
+    LOOP AT year_upload.
+      CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+        EXPORTING
+          input  = year_upload-filed2
+        IMPORTING
+          output = year_upload-filed2.
+      MODIFY year_upload.
+    ENDLOOP.
+
+    CHECK year_upload[] IS NOT INITIAL.
+    SELECT matnr mtart
+      INTO CORRESPONDING FIELDS OF TABLE lt_mara
+      FROM mara
+      FOR ALL ENTRIES IN year_upload
+     WHERE matnr = year_upload-filed2.
+
+    SORT lt_mara.
+
+    DESCRIBE TABLE year_upload LINES g_lines.
+
+    LOOP AT year_upload.
+<font color ="#0000FF">*##### ###</font>
+<font color ="#0000FF">*## ### ### ### ### ##</font>
+      CASE 'X'.
+        WHEN p_rad3."FERM/FERT
+          READ TABLE lt_mara WITH KEY matnr = year_upload-filed2
+          BINARY SEARCH.
+<font color ="#0000FF">*          IF LT_MARA-MTART &lt;&gt; 'FERT' OR LT_MARA-MTART &lt;&gt; 'FERM'.</font>
+<font color ="#0000FF">*            G_COUNT = G_COUNT + 1.</font>
+<font color ="#0000FF">*            CONTINUE.</font>
+<font color ="#0000FF">*          ENDIF.</font>
+          CASE lt_mara-mtart.
+            WHEN 'FERT' OR 'FERM'.
+            WHEN OTHERS.
+              g_count = g_count + 1.
+              CONTINUE.
+          ENDCASE.
+        WHEN p_rad4."HALB
+          READ TABLE lt_mara WITH KEY matnr = year_upload-filed2
+          BINARY SEARCH.
+          IF lt_mara-mtart &lt;&gt; 'HALB'.
+            g_count = g_count + 1.
+            CONTINUE.
+          ENDIF.
+      ENDCASE.
+
+      IF year_upload-filed1(01) &lt;&gt; 'Y'.
+        gt_excel-g_type = 'E'.
+        gt_excel-g_message = TEXT-011.
+      ELSEIF year_upload-filed1 &lt;&gt; 'Y1' AND
+         year_upload-filed1 &lt;&gt; 'Y2' AND
+         year_upload-filed1 &lt;&gt; 'Y3' AND
+         year_upload-filed1 &lt;&gt; 'Y4' AND
+         year_upload-filed1 &lt;&gt; 'Y5' AND
+         year_upload-filed1 &lt;&gt; 'Y6'.
+        gt_excel-g_type = 'E'.
+        gt_excel-g_message = TEXT-010.
+      ENDIF.
+      gt_excel-versb = year_upload-filed1.
+      gt_excel-matnr = year_upload-filed2.
+      gt_excel-maktx = year_upload-filed3.
+      gt_excel-m1    = year_upload-filed4.
+      gt_excel-m2    = year_upload-filed5.
+      gt_excel-m3    = year_upload-filed6.
+      gt_excel-m4    = year_upload-filed7.
+      gt_excel-m5    = year_upload-filed8.
+      gt_excel-m6    = year_upload-filed9.
+      gt_excel-m7    = year_upload-filed10.
+      gt_excel-m8    = year_upload-filed11.
+      gt_excel-m9    = year_upload-filed12.
+      gt_excel-m10   = year_upload-filed13.
+      gt_excel-m11   = year_upload-filed14.
+      gt_excel-m12   = year_upload-filed15.
+
+      CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+        EXPORTING
+          input  = gt_excel-matnr
+        IMPORTING
+          output = gt_excel-matnr
+<font color ="#0000FF">*       EXCEPTIONS</font>
+<font color ="#0000FF">*         LENGTH_ERROR       = 1</font>
+<font color ="#0000FF">*         OTHERS = 2</font>
+        .
+      IF sy-subrc &lt;&gt; 0.
+<font color ="#0000FF">* Implement suitable error handling here</font>
+      ENDIF.
+      REPLACE ALL OCCURRENCES OF '-' IN gt_excel-matnr WITH space.
+      COLLECT gt_excel.
+      CLEAR   gt_excel.
+    ENDLOOP.
+
+  ELSEIF p_rad2 = 'X'.
+    CALL FUNCTION 'TEXT_CONVERT_XLS_TO_SAP'
+      EXPORTING
+<font color ="#0000FF">*       I_FIELD_SEPERATOR    =</font>
+        i_line_header        = 'X'
+        i_tab_raw_data       = it_raw
+        i_filename           = p_file
+      TABLES
+        i_tab_converted_data = month_upload
+      EXCEPTIONS
+        conversion_failed    = 1
+        OTHERS               = 2.
+    IF sy-subrc &lt;&gt; 0.
+      MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+    ENDIF.
+
+<font color ="#0000FF">*##### ###</font>
+<font color ="#0000FF">*## ### ### ### ### ##</font>
+
+    LOOP AT month_upload.
+      CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+        EXPORTING
+          input  = month_upload-filed2
+        IMPORTING
+          output = month_upload-filed2.
+      MODIFY month_upload.
+    ENDLOOP.
+
+    CHECK month_upload[] IS NOT INITIAL.
+    SELECT matnr mtart
+      INTO CORRESPONDING FIELDS OF TABLE lt_mara
+      FROM mara
+      FOR ALL ENTRIES IN month_upload
+     WHERE matnr = month_upload-filed2.
+
+    SORT lt_mara.
+
+    DESCRIBE TABLE month_upload LINES g_lines.
+
+    LOOP AT month_upload.
+<font color ="#0000FF">*##### ###</font>
+<font color ="#0000FF">*## ### ### ### ### ##</font>
+      CASE 'X'.
+        WHEN p_rad3."FERM/FERT
+          READ TABLE lt_mara WITH KEY matnr = month_upload-filed2
+          BINARY SEARCH.
+
+          CASE lt_mara-mtart.
+            WHEN 'FERT' OR 'FERM'.
+            WHEN OTHERS.
+              CONTINUE.
+          ENDCASE.
+
+        WHEN p_rad4."HALB
+          READ TABLE lt_mara WITH KEY matnr = month_upload-filed2
+          BINARY SEARCH.
+          IF lt_mara-mtart &lt;&gt; 'HALB'.
+            g_count = g_count + 1.
+            CONTINUE.
+          ENDIF.
+      ENDCASE.
+
+      IF month_upload-filed1(01) &lt;&gt; 'M'.
+        gt_excel-g_type = 'E'.
+        gt_excel-g_message = TEXT-012.
+      ELSEIF month_upload-filed1 &lt;&gt; 'M1' AND
+         month_upload-filed1 &lt;&gt; 'M2' AND
+         month_upload-filed1 &lt;&gt; 'M3' AND
+         month_upload-filed1 &lt;&gt; 'M4' AND
+         month_upload-filed1 &lt;&gt; 'M5' AND
+         month_upload-filed1 &lt;&gt; 'M6'.
+        gt_excel-g_type = 'E'.
+        gt_excel-g_message = TEXT-010.
+      ENDIF.
+      gt_excel-versb = month_upload-filed1.
+      gt_excel-matnr = month_upload-filed2.
+      gt_excel-maktx = month_upload-filed3.
+      gt_excel-m1    = month_upload-filed4.
+      gt_excel-m2    = month_upload-filed5.
+      gt_excel-m3    = month_upload-filed6.
+      gt_excel-m4    = month_upload-filed7.
+      gt_excel-m5    = month_upload-filed8.
+
+
+      CALL FUNCTION 'CONVERSION_EXIT_MATN1_INPUT'
+        EXPORTING
+          input  = gt_excel-matnr
+        IMPORTING
+          output = gt_excel-matnr
+<font color ="#0000FF">*       EXCEPTIONS</font>
+<font color ="#0000FF">*         LENGTH_ERROR       = 1</font>
+<font color ="#0000FF">*         OTHERS = 2</font>
+        .
+      IF sy-subrc &lt;&gt; 0.
+<font color ="#0000FF">* Implement suitable error handling here</font>
+      ENDIF.
+      COLLECT gt_excel.
+      CLEAR   gt_excel.
+    ENDLOOP.
+  ENDIF.
+
+
+ENDFORM. " GET_EXCEL_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  PROCESS_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM process_data .
+  IF p_rad1 = 'X'.
+    CONCATENATE p_year '01' '01' INTO p_date.
+  ELSEIF p_rad2 = 'X'.
+    CONCATENATE p_month '01' INTO p_date.
+  ENDIF.
+<font color ="#0000FF">*-- Get display header data.</font>
+  PERFORM get_header_data.
+
+  IF gt_itab[] IS NOT INITIAL.
+<font color ="#0000FF">*-- Get material master data</font>
+    PERFORM get_mara_marc_data.
+<font color ="#0000FF">*-- Get material bom data</font>
+    PERFORM get_mast_data.
+<font color ="#0000FF">*-- get material routing data</font>
+    PERFORM get_mapl_data.
+<font color ="#0000FF">*-- Get material production version data</font>
+    PERFORM get_mkal_data.
+<font color ="#0000FF">*-- Get material desc data</font>
+    PERFORM get_makt_data.
+  ENDIF.
+
+  SORT gt_itab BY matnr.
+  LOOP AT gt_itab.
+    gs3 = gs3 + 1.
+    IF gt_itab-g_type = 'E'.
+      gt_itab-g_icon = icon_led_red.
+      gs2 = gs2 + 1.
+      MODIFY gt_itab.
+      CLEAR  gt_itab.
+      CONTINUE.
+    ENDIF.
+    CLEAR gt_makt.
+    READ TABLE gt_makt WITH KEY matnr = gt_itab-matnr
+                                      BINARY SEARCH.
+    IF sy-subrc = 0.
+      gt_itab-maktx = gt_makt-maktx.
+    ENDIF.
+
+    CLEAR gt_mara.
+    READ TABLE gt_mara WITH KEY matnr = gt_itab-matnr
+                                      BINARY SEARCH.
+    IF sy-subrc = 0.
+      gt_itab-matkl = gt_mara-matkl.
+      gt_itab-mtart = gt_mara-mtart.
+      gt_itab-lvorm = gt_mara-lvorm.
+      gt_itab-mmsta = gt_mara-mmsta.
+    ENDIF.
+<font color ="#0000FF">*** ##CHECKBOX ########### JZ.XU</font>
+    IF p_c1 = 'X'.
+      IF gt_itab-mtart &lt;&gt; 'FERM' AND gt_itab-mtart &lt;&gt; 'FERT'.
+        IF gt_itab-mtart &lt;&gt; 'HALB'.
+          gt_itab-g_type = 'E'.
+          gt_itab-g_message = 'The material is not exist!'.
+          gt_itab-g_icon = icon_led_red.
+          gs2 = gs2 + 1.
+          MODIFY gt_itab.
+          CLEAR  gt_itab.
+          CONTINUE.
+        ENDIF.
+      ENDIF.
+
+      IF gt_itab-lvorm = 'X'.
+        gt_itab-g_type = 'E'.
+        gt_itab-g_message = 'The material is not exist!'.
+        gt_itab-g_icon = icon_led_red.
+        gs2 = gs2 + 1.
+        MODIFY gt_itab.
+        CLEAR  gt_itab.
+        CONTINUE.
+      ENDIF.
+
+      IF gt_itab-mmsta &lt;&gt; ' ' AND gt_itab-mmsta &lt;&gt; 'BO'.
+        gt_itab-g_type = 'E'.
+        gt_itab-g_message = 'The material is not exist!'.
+        gt_itab-g_icon = icon_led_red.
+        gs2 = gs2 + 1.
+        MODIFY gt_itab.
+        CLEAR  gt_itab.
+        CONTINUE.
+      ENDIF.
+
+      CLEAR gt_mast.
+      READ TABLE gt_mast WITH KEY matnr = gt_itab-matnr
+                                        BINARY SEARCH.
+      IF sy-subrc &lt;&gt; 0.
+        gt_itab-g_type = 'E'.
+        gt_itab-g_message = TEXT-014.
+        gt_itab-g_icon = icon_led_red.
+        gs2 = gs2 + 1.
+        MODIFY gt_itab.
+        CLEAR  gt_itab.
+        CONTINUE.
+      ENDIF.
+
+      CLEAR gt_mapl.
+      READ TABLE gt_mapl WITH KEY matnr = gt_itab-matnr
+                                        BINARY SEARCH.
+      IF sy-subrc &lt;&gt; 0.
+        gt_itab-g_type = 'E'.
+        gt_itab-g_message = TEXT-015.
+        gt_itab-g_icon = icon_led_red.
+        gs2 = gs2 + 1.
+        MODIFY gt_itab.
+        CLEAR  gt_itab.
+        CONTINUE.
+      ENDIF.
+
+      CLEAR gt_mkal.
+      READ TABLE gt_mkal WITH KEY matnr = gt_itab-matnr
+                                        BINARY SEARCH.
+      IF sy-subrc &lt;&gt; 0.
+        gt_itab-g_type = 'E'.
+        gt_itab-g_message = TEXT-016.
+        gt_itab-g_icon = icon_led_red.
+        gs2 = gs2 + 1.
+        MODIFY gt_itab.
+        CLEAR  gt_itab.
+        CONTINUE.
+      ENDIF.
+    ENDIF.
+
+
+    gt_itab-g_type = 'S'.
+    gt_itab-g_icon = icon_led_yellow.
+    gs1 = gs1 + 1.
+    MODIFY gt_itab.
+    CLEAR  gt_itab.
+  ENDLOOP.
+
+<font color ="#0000FF">*  PBIM #### ### ###</font>
+<font color ="#0000FF">*  #### ##### ### #### #####</font>
+  PERFORM get_pbim.
+
+  CALL SCREEN 100.
+
+ENDFORM. " PROCESS_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MARA_MARC_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_mara_marc_data .
+  CLEAR : gt_mara, gt_mara[].
+  CHECK gt_itab[] IS NOT INITIAL.
+
+  SELECT a~matnr a~matkl a~mtart b~lvorm b~mmsta
+    FROM mara AS a INNER JOIN marc AS b
+      ON a~matnr = b~matnr
+    INTO TABLE gt_mara
+     FOR ALL ENTRIES IN gt_itab
+   WHERE b~werks = s_werks-low
+     AND a~matnr = gt_itab-matnr.
+<font color ="#0000FF">*     AND A~MTART IN ('FERM','FERT')</font>
+<font color ="#0000FF">*     AND A~MATKL IN S_MATKL</font>
+<font color ="#0000FF">*     AND B~LVORM &lt;&gt; 'X'</font>
+<font color ="#0000FF">*     AND ( B~MMSTA = '' OR B~MMSTA = 'BO').</font>
+  SORT gt_mara.
+ENDFORM. " GET_MARA_MARC_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MAST_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_mast_data .
+  CLEAR : gt_mast, gt_mast[].
+  CHECK gt_itab[] IS NOT INITIAL.
+  SELECT matnr werks stlan stlnr stlal
+    FROM mast
+    INTO TABLE gt_mast
+     FOR ALL ENTRIES IN gt_itab
+   WHERE werks = s_werks-low
+     AND stlan = '1'
+     AND matnr = gt_itab-matnr.
+  SORT gt_mast BY matnr.
+ENDFORM. " GET_MAST_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MAPL_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_mapl_data .
+  CLEAR : gt_mapl, gt_mapl[].
+  CHECK gt_itab[] IS NOT INITIAL.
+  SELECT matnr werks plnty plnnr plnal zkriz zaehl
+    FROM mapl
+    INTO TABLE gt_mapl
+     FOR ALL ENTRIES IN gt_itab
+   WHERE werks = s_werks-low
+     AND plnty IN ('N','R')
+     AND matnr = gt_itab-matnr
+     AND datuv &lt;= p_date.
+  SORT gt_mapl BY matnr.
+ENDFORM. " GET_MAPL_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MKAL_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_mkal_data .
+  CLEAR : gt_mkal, gt_mkal[].
+  CHECK gt_itab[] IS NOT INITIAL.
+  SELECT matnr werks verid
+    FROM mkal
+    INTO TABLE gt_mkal
+     FOR ALL ENTRIES IN gt_itab
+   WHERE werks = s_werks-low
+     AND matnr = gt_itab-matnr
+     AND adatu &lt;= p_date.
+  SORT gt_mkal BY matnr.
+ENDFORM. " GET_MKAL_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MAKT_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_makt_data .
+  CLEAR : gt_makt, gt_makt[].
+  CHECK gt_itab[] IS NOT INITIAL.
+  SELECT matnr maktx
+    FROM makt
+    INTO TABLE gt_makt
+     FOR ALL ENTRIES IN gt_itab
+   WHERE matnr = gt_itab-matnr
+     AND spras = sy-langu.
+  SORT gt_makt BY matnr.
+ENDFORM. " GET_MAKT_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DATE_CHECK</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM date_check .
+  READ TABLE s_werks INDEX 1.
+  IF p_rad1 = 'X'.
+<font color ="#0000FF">*    CASE S_WERKS-LOW.</font>
+<font color ="#0000FF">*      WHEN '2111' OR '2112' OR '2113' OR '2121' OR '2311'.</font>
+    PERFORM year_date_2.
+<font color ="#0000FF">*      WHEN OTHERS.</font>
+<font color ="#0000FF">*        PERFORM YEAR_DATE.</font>
+<font color ="#0000FF">*    ENDCASE.</font>
+    PERFORM pro_y_data.
+  ELSEIF p_rad2 = 'X'.
+<font color ="#0000FF">*    CASE S_WERKS-LOW.</font>
+<font color ="#0000FF">*      WHEN '2111' OR '2112' OR '2113' OR '2121' OR '2311'.</font>
+    PERFORM month_date_2.
+<font color ="#0000FF">*      WHEN OTHERS.</font>
+<font color ="#0000FF">*        PERFORM MONTH_DATE.</font>
+<font color ="#0000FF">*    ENDCASE.</font>
+    PERFORM pro_m_data.
+  ENDIF.
+ENDFORM. " DATE_CHECK
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  MONTH_DATE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM month_date .
+  DATA m_year  LIKE p_year.
+  DATA m_month LIKE p_month.
+  DATA n_month(02) TYPE c.
+  DATA d_day  LIKE sy-datum.
+  DATA m_month1 LIKE m_month.
+  DATA week_number(02) TYPE c.
+
+
+  CONCATENATE p_month '01' INTO m_date-m_low .
+  APPEND m_date.
+
+  DO 4 TIMES.
+    SORT m_date DESCENDING BY m_low.
+    READ TABLE m_date INDEX 1.
+    IF m_date-m_low+04(02) = 12.
+      m_year = p_month(04) + 01.
+      CONCATENATE m_year '01' '01' INTO m_date-m_low.
+      APPEND m_date.
+    ELSE.
+      CLEAR m_month.
+      n_month = m_date-m_low+04(02) + 1.
+      IF n_month &lt; 10.
+        CONCATENATE '0' n_month INTO n_month.
+      ENDIF.
+      CONCATENATE m_date-m_low(04) n_month INTO m_month.
+      CONCATENATE m_month '01' INTO m_date-m_low.
+      APPEND m_date.
+    ENDIF.
+  ENDDO.
+
+  SORT m_date BY m_low.
+  LOOP AT m_date.
+    CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+      EXPORTING
+        day_in            = m_date-m_low
+      IMPORTING
+        last_day_of_month = m_date-m_high
+      EXCEPTIONS
+        day_in_no_date    = 1
+        OTHERS            = 2.
+    MODIFY m_date.
+
+    CALL FUNCTION 'FIMA_DAYS_AND_MONTHS_AND_YEARS'
+      EXPORTING
+        i_date_from    = m_date-m_low
+        i_key_day_from = '00'
+        i_date_to      = m_date-m_high
+        i_key_day_to   = '00'
+        i_flg_separate = ''
+      IMPORTING
+        e_days         = m_date-sum.
+    CLEAR d_day.
+
+    d_day = m_date-m_low.
+
+    CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+      EXPORTING
+        langu = sy-langu
+        date  = d_day
+      IMPORTING
+        daynr = m_day-daynr.
+
+    IF m_day-daynr = 6.
+      m_day-type = 'X'.
+      m_day-day  = d_day.
+      m_day-week = '-W1'.
+      week_number = 1.
+      m_day-day1 = m_day-day(06).
+      CONCATENATE m_day-day(04) '.' m_day-day+04(02)
+            m_day-week INTO m_day-week.
+      APPEND m_day.
+    ENDIF.
+
+
+    DO  m_date-sum TIMES.
+
+      CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL_ZA'
+        EXPORTING
+          date      = d_day
+          days      = '1'
+          months    = '00'
+          signum    = '+'
+          years     = '00'
+        IMPORTING
+          calc_date = d_day.
+
+      m_day-day = d_day.
+
+      CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+        EXPORTING
+          langu = sy-langu
+          date  = m_day-day
+        IMPORTING
+          daynr = m_day-daynr.
+
+      IF m_day-daynr = 6.
+        m_day-type = 'X'.
+        IF m_month1 &lt;&gt; m_day-day(06).
+          IF week_number IS NOT INITIAL.
+            m_day-type = 'X'.
+            week_number = week_number + 1.
+            CONCATENATE '-W' week_number INTO m_day-week.
+          ELSE.
+            m_month1 = m_day-day.
+            m_day-week = '-W1'.
+            week_number = 1.
+          ENDIF.
+        ELSEIF m_month1 = m_day-day(06).
+          week_number = week_number + 1.
+          CONCATENATE '-W' week_number INTO m_day-week.
+        ENDIF.
+        m_day-day1 = m_day-day(06).
+        m_day-sum = 1.
+        CONCATENATE m_day-day(04) '.' m_day-day+04(02)
+                    m_day-week INTO m_day-week.
+        APPEND m_day.
+      ENDIF.
+
+      IF m_day-day = m_date-m_high.
+        IF m_day-daynr &lt; 6.
+          m_day-type = 'X'.
+          IF m_month1 &lt;&gt; m_day-day(06).
+            m_month1 = m_day-day.
+            m_day-week = '-W1'.
+            week_number = 1.
+          ELSEIF m_month1 = m_day-day(06).
+            week_number = week_number + 1.
+            CONCATENATE '-W' week_number INTO m_day-week.
+          ENDIF.
+          m_day-day1 = m_day-day(06).
+          m_day-sum = 1.
+          CONCATENATE m_day-day(04) '.' m_day-day+04(02)
+                      m_day-week INTO m_day-week.
+          APPEND m_day.
+        ENDIF.
+      ENDIF.
+    ENDDO.
+    CLEAR week_number.
+  ENDLOOP.
+
+  LOOP AT m_day.
+    MOVE-CORRESPONDING m_day TO gt_sum.
+    COLLECT gt_sum.
+    CLEAR   gt_sum.
+  ENDLOOP.
+  SORT gt_sum BY day1.
+ENDFORM. " MONTH_DATE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  YEAR_DATE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM year_date .
+  DATA d_number(02).
+  DATA d_daynr LIKE hrvsched-daynr.
+
+  DO 12 TIMES.
+    d_number = d_number + 1.
+    IF d_number &lt; 10.
+      CONCATENATE '0' d_number INTO d_number.
+    ENDIF.
+    CONCATENATE p_year '.' d_number INTO y_date-month.
+    APPEND y_date.
+  ENDDO.
+
+  LOOP AT y_date.
+    CONCATENATE y_date-month(04) y_date-month+05(02)
+                '01' INTO y_date-day.
+    CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+      EXPORTING
+        day_in            = y_date-day
+      IMPORTING
+        last_day_of_month = y_date-day
+      EXCEPTIONS
+        day_in_no_date    = 1
+        OTHERS            = 2.
+
+    CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+      EXPORTING
+        langu = sy-langu
+        date  = y_date-day
+      IMPORTING
+        daynr = d_daynr.
+
+    IF d_daynr = 7.
+      y_date-day = y_date-day - 1.
+    ENDIF.
+    MODIFY y_date.
+  ENDLOOP.
+
+ENDFORM. " YEAR_DATE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  STATUS_0100  OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS '0100' EXCLUDING 'BAPI'.
+  SET TITLEBAR  '0100'.
+ENDMODULE. " STATUS_0100 OUTPUT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit INPUT.
+<font color ="#0000FF">*  SET SCREEN 0.</font>
+  LEAVE TO SCREEN 0.
+ENDMODULE. " EXIT INPUT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  USER_COMMAND_0100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE user_command_0100 INPUT.
+
+  CLEAR : gs6.
+  CLEAR save_code.
+  save_code = ok_code.
+  CLEAR ok_code.
+  CALL METHOD g_grid-&gt;check_changed_data.
+  PERFORM check_data.
+  CASE save_code.
+    WHEN 'BAPI'.
+      gs6 = gs1.
+      CLEAR gt_itab.
+      READ TABLE gt_itab WITH KEY bdc_type = 'S'.
+      CLEAR : versb-low,versb-high.
+      IF sy-subrc &lt;&gt; 0.
+        IF p_rad1 = 'X'.
+          versb-low = 'Y1'.
+          versb-high = 'Y6'.
+        ELSEIF p_rad2 = 'X'.
+          versb-low = 'M1'.
+          versb-high = 'M6'.
+        ENDIF.
+        PERFORM bdc_md74_data.
+        PERFORM bdc_md75_data.
+        PERFORM bdc_md76_data.
+      ENDIF.
+      PERFORM bapi_data.
+  ENDCASE.
+  PERFORM refresh_display_data.
+ENDMODULE. " USER_COMMAND_0100 INPUT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  CREATE_AND_INIT_ALV  OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE create_and_init_alv OUTPUT.
+  IF g_docking_container IS INITIAL.
+
+    PERFORM creat_con.
+    PERFORM event_receiver.
+<font color ="#0000FF">*    PERFORM EXCLUDE_TB_FUNCTIONS.</font>
+    PERFORM set_variant.
+    PERFORM set_layout.
+    PERFORM set_sort.
+    PERFORM bulld_fieldcat.
+<font color ="#0000FF">*    PERFORM ALV_HEADER.</font>
+    PERFORM display_alv_container.
+  ENDIF.
+ENDMODULE. " CREATE_AND_INIT_ALV OUTPUT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EVENT_RECEIVER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM event_receiver .
+
+  CALL METHOD g_grid-&gt;register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=&gt;mc_evt_modified.
+
+  CREATE OBJECT event_receiver.
+  SET HANDLER event_receiver-&gt;handle_data_changed FOR g_grid.
+  SET HANDLER event_receiver-&gt;handle_toolbar      FOR g_grid.
+  SET HANDLER event_receiver-&gt;handle_user_command FOR g_grid.
+  SET HANDLER event_receiver-&gt;handle_double_click FOR g_grid.
+  SET HANDLER event_receiver-&gt;handle_top_of_page  FOR g_grid.
+  CALL METHOD cl_gui_control=&gt;set_focus
+    EXPORTING
+      control = g_grid.
+
+  IF gt_list[] IS NOT INITIAL.
+
+
+    CALL METHOD g_grid2-&gt;register_edit_event
+      EXPORTING
+        i_event_id = cl_gui_alv_grid=&gt;mc_evt_modified.
+
+    SET HANDLER event_receiver-&gt;handle_data_changed FOR g_grid2.
+    SET HANDLER event_receiver-&gt;handle_toolbar      FOR g_grid2.
+    SET HANDLER event_receiver-&gt;handle_user_command FOR g_grid2.
+    SET HANDLER event_receiver-&gt;handle_double_click FOR g_grid2.
+    CALL METHOD cl_gui_control=&gt;set_focus
+      EXPORTING
+        control = g_grid2.
+  ENDIF.
+
+ENDFORM. " EVENT_RECEIVER
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_VARIANT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_variant .
+  CLEAR: gs_variant.
+  gs_variant-report     = sy-repid.
+ENDFORM. " SET_VARIANT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_LAYOUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_layout .
+  CLEAR: g_s_layout.
+
+  g_s_layout-cwidth_opt  = 'X'.
+  g_s_layout-sel_mode    = 'D'.
+  g_s_layout-zebra       = ' '.
+  g_s_layout-stylefname  = ' '.
+  g_s_layout-info_fname  = ' '.
+  g_s_layout-stylefname  = 'FIELD_STYLE'.
+ENDFORM. " SET_LAYOUT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_SORT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_sort .
+<font color ="#0000FF">*                         NAME   UP DOWN SUBTOT  NO_OUT</font>
+  PERFORM make_sort USING:'MATNR' 'X' ''   ''      ''.
+<font color ="#0000FF">*  DOCKING ####</font>
+  PERFORM make_sort2 USING:'VERSB' 'X' ''   ''      ''.
+  PERFORM make_sort2 USING:'PBDNR' 'X' ''   ''      ''.
+  PERFORM make_sort2 USING:'MATNR' 'X' ''   ''      ''.
+ENDFORM. " SET_SORT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  MAKE_SORT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM make_sort USING p_fname
+                     p_up
+                     p_down
+                     p_subtot
+                     p_no_out.
+  ADD 1 TO  l_spos.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = p_fname.
+  ls_sort-spos      = l_spos.
+  ls_sort-up        = p_up.
+  ls_sort-down      = p_down.
+  ls_sort-subtot    = p_subtot.
+  ls_sort-no_out    = p_no_out.
+  APPEND ls_sort   TO gt_sort.
+
+
+ENDFORM. " MAKE_SORT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  MAKE_SORT2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_FNAME    text</font>
+<font color ="#0000FF">*      --&gt;P_UP       text</font>
+<font color ="#0000FF">*      --&gt;P_DOWN     text</font>
+<font color ="#0000FF">*      --&gt;P_SUBTOT   text</font>
+<font color ="#0000FF">*      --&gt;P_NO_OUT   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM make_sort2 USING p_fname
+                     p_up
+                     p_down
+                     p_subtot
+                     p_no_out.
+  ADD 1 TO  l_spos.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = p_fname.
+  ls_sort-spos      = l_spos.
+  ls_sort-up        = p_up.
+  ls_sort-down      = p_down.
+  ls_sort-subtot    = p_subtot.
+  ls_sort-no_out    = p_no_out.
+  APPEND ls_sort   TO gt_sort2.
+
+
+ENDFORM. " MAKE_SORT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BULLD_FIELDCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bulld_fieldcat .
+  DATA : filed_name(40) TYPE c.
+  DATA : number(02).
+
+  CLEAR :number,filed_name.
+  PERFORM append_fieldcat TABLES   g_t_fieldcat
+                           USING:
+<font color ="#0000FF">*  '01' 'G_BOX'        'X'  'X'   TEXT-017,</font>
+  '01' 'X' 'G_ICON'       '06'  ' '   TEXT-018 ' ',
+  '01' 'X' 'VERSB'        '06'  ' '   TEXT-023 ' ',
+  '01' 'X' 'MATNR'        '18'  ' '   TEXT-020 ' ',
+  '01' 'X' 'MAKTX'        '40'  ' '   TEXT-021 ' ',
+  '01' 'X' 'MTART'        '20'  ' '   TEXT-032 ' ',
+  '01' 'X' 'MATKL'        '15'  ' '   TEXT-022 ' '.
+  IF p_rad1 = 'X'.
+    LOOP AT y_date.
+      number = number + 1.
+      CONCATENATE 'FILED' number INTO filed_name.
+      PERFORM append_fieldcat TABLES   g_t_fieldcat
+                               USING:
+          '01' ' ' filed_name        '16'  ' '   y_date-month ' '.
+    ENDLOOP.
+  ELSEIF p_rad2 = 'X'.
+
+    LOOP AT m_day.
+      number = number + 1.
+      CONCATENATE 'FILED' number INTO filed_name.
+      PERFORM append_fieldcat TABLES   g_t_fieldcat
+                               USING:
+          '01' ' ' filed_name        '16'  ' '   m_day-week ' '.
+    ENDLOOP.
+  ENDIF.
+
+  PERFORM append_fieldcat TABLES   g_t_fieldcat
+                     USING:
+    '01' ' ' 'TOTAL'        '13'  ' '   TEXT-029 'C100',
+    '01' ' ' 'G_MESSAGE'    '50'  ' '   TEXT-024 'C100'.
+
+
+  PERFORM append_fieldcat TABLES   g_t_fieldcat2
+                           USING:
+<font color ="#0000FF">*  '01' 'G_BOX'        'X'  'X'   TEXT-017,</font>
+  '01' 'X' 'G_ICON'       '06'  ' '   TEXT-018 ' ',
+  '01' 'X' 'VERSB'        '06'  ' '   TEXT-023 ' ',
+  '01' 'X' 'PBDNR'        '10'  ' '   'Requment Plan' ' ',
+  '01' 'X' 'MATNR'        '18'  ' '   TEXT-020 ' ',
+  '01' '' 'MAKTX'        '40'  ' '   TEXT-021 ' ',
+  '01' '' 'MTART'        '20'  ' '   TEXT-032 ' ',
+  '01' '' 'MATKL'        '15'  ' '   TEXT-022 ' '.
+
+ENDFORM. " BULLD_FIELDCAT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  APPEND_FIELDCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM append_fieldcat TABLES p_gt_fieldcat TYPE lvc_t_fcat
+                      USING    p_col_pos
+                               p_key
+                               p_fieldname
+                               outputlen
+                               p_checkbox
+                               p_reptext
+                               p_color.
+
+  CLEAR: gs_fieldcat.
+  gs_fieldcat-col_pos   = p_col_pos.
+  gs_fieldcat-key       = p_key.
+  gs_fieldcat-fieldname = p_fieldname.
+  gs_fieldcat-tabname   = 'GT_TEMP'.
+  gs_fieldcat-outputlen = outputlen.
+  gs_fieldcat-checkbox  = p_checkbox.
+  gs_fieldcat-reptext   = gs_fieldcat-seltext = gs_fieldcat-coltext
+                        = p_reptext.
+  gs_fieldcat-emphasize = p_color.
+  gs_fieldcat-quantity   = 'EA'.
+  APPEND gs_fieldcat TO p_gt_fieldcat.
+
+ENDFORM. " APPEND_FIELDCAT
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  APPEND_FIELDCAT2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_GT_FIELDCAT  text</font>
+<font color ="#0000FF">*      --&gt;P_COL_POS      text</font>
+<font color ="#0000FF">*      --&gt;P_KEY          text</font>
+<font color ="#0000FF">*      --&gt;P_FIELDNAME    text</font>
+<font color ="#0000FF">*      --&gt;OUTPUTLEN      text</font>
+<font color ="#0000FF">*      --&gt;P_CHECKBOX     text</font>
+<font color ="#0000FF">*      --&gt;P_REPTEXT      text</font>
+<font color ="#0000FF">*      --&gt;P_COLOR        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM append_fieldcat2 TABLES p_gt_fieldcat TYPE lvc_t_fcat
+                      USING    p_col_pos
+                               p_key
+                               p_fieldname
+                               outputlen
+                               p_checkbox
+                               p_reptext
+                               p_color.
+
+  CLEAR: gs_fieldcat.
+  gs_fieldcat-col_pos   = p_col_pos.
+  gs_fieldcat-key       = p_key.
+  gs_fieldcat-fieldname = p_fieldname.
+  gs_fieldcat-tabname   = 'GT_OUT'.
+  gs_fieldcat-outputlen = outputlen.
+  gs_fieldcat-checkbox  = p_checkbox.
+  gs_fieldcat-reptext   = gs_fieldcat-seltext = gs_fieldcat-coltext
+                        = p_reptext.
+  gs_fieldcat-emphasize = p_color.
+  gs_fieldcat-quantity   = 'EA'.
+  APPEND gs_fieldcat TO p_gt_fieldcat.
+
+ENDFORM. " APPEND_FIELDCAT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DISPLAY_ALV_CONTAINER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM display_alv_container .
+
+
+  CALL METHOD g_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_layout            = g_s_layout
+      is_variant           = gs_variant
+      i_save               = 'A'
+      it_toolbar_excluding = gt_toolbar_excluding
+    CHANGING
+      it_fieldcatalog      = g_t_fieldcat[]
+      it_outtab            = gt_itab[]
+      it_sort              = gt_sort[].
+
+  IF document IS NOT INITIAL.
+
+    CALL METHOD document-&gt;initialize_document.
+    CALL METHOD g_grid-&gt;list_processing_events
+      EXPORTING
+        i_event_name = 'TOP_OF_PAGE'
+        i_dyndoc_id  = document.
+
+  ENDIF.
+
+  IF gt_list[] IS NOT INITIAL.
+    CALL METHOD g_grid2-&gt;set_table_for_first_display
+      EXPORTING
+        is_layout            = g_s_layout
+        is_variant           = gs_variant
+        i_save               = 'A'
+        it_toolbar_excluding = gt_toolbar_excluding
+      CHANGING
+        it_fieldcatalog      = g_t_fieldcat2[]
+        it_outtab            = gt_list[]
+        it_sort              = gt_sort2[].
+  ENDIF.
+
+ENDFORM. " DISPLAY_ALV_CONTAINER
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  HANDLE_TOOLBAR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_OBJECT  text</font>
+<font color ="#0000FF">*      --&gt;P_E_INTERACTIVE  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM handle_toolbar USING sender
+                 i_object TYPE REF TO cl_alv_event_toolbar_set
+                 p_e_interactive TYPE char1.
+
+  DATA: ls_toolbar TYPE stb_button.
+
+  CASE sender.
+    WHEN g_grid.
+      CLEAR ls_toolbar.
+      ls_toolbar-butn_type = '0'.
+      ls_toolbar-function = 'CREATE'.
+      ls_toolbar-icon = '@15@'.
+      ls_toolbar-quickinfo = 'PIR CREATE'.
+      ls_toolbar-text = 'PIR CREATE'.
+      APPEND ls_toolbar TO i_object-&gt;mt_toolbar.
+
+      CLEAR ls_toolbar.
+      ls_toolbar-butn_type = '3'.
+      APPEND ls_toolbar TO i_object-&gt;mt_toolbar.
+    WHEN g_grid2.
+      CLEAR ls_toolbar.
+      ls_toolbar-butn_type = '0'.
+      ls_toolbar-function = 'DELETE'.
+      ls_toolbar-icon = '@15@'.
+      ls_toolbar-quickinfo = 'PIR DEL'.
+      ls_toolbar-text = 'PIR DEL'.
+      APPEND ls_toolbar TO i_object-&gt;mt_toolbar.
+
+      CLEAR ls_toolbar.
+      ls_toolbar-butn_type = '3'.
+      APPEND ls_toolbar TO i_object-&gt;mt_toolbar.
+  ENDCASE.
+
+
+
+<font color ="#0000FF">*  CLEAR LS_TOOLBAR.</font>
+<font color ="#0000FF">*  MOVE 3 TO LS_TOOLBAR-BUTN_TYPE.</font>
+<font color ="#0000FF">*  APPEND LS_TOOLBAR TO I_OBJECT-&gt;MT_TOOLBAR.</font>
+<font color ="#0000FF">*  CLEAR LS_TOOLBAR.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  MOVE 'REFRESH' TO LS_TOOLBAR-FUNCTION.</font>
+<font color ="#0000FF">*  MOVE ICON_REFRESH TO LS_TOOLBAR-ICON.</font>
+<font color ="#0000FF">*  INSERT LS_TOOLBAR INTO I_OBJECT-&gt;MT_TOOLBAR INDEX 1.</font>
+<font color ="#0000FF">*  CLEAR LS_TOOLBAR.</font>
+
+<font color ="#0000FF">*  MOVE 'S_ALL' TO LS_TOOLBAR-FUNCTION.                      "#EC NOTEXT</font>
+<font color ="#0000FF">*  MOVE ICON_SELECT_ALL TO LS_TOOLBAR-ICON.</font>
+<font color ="#0000FF">*  INSERT LS_TOOLBAR INTO I_OBJECT-&gt;MT_TOOLBAR INDEX 2.</font>
+<font color ="#0000FF">*  CLEAR LS_TOOLBAR.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  MOVE 'D_ALL' TO LS_TOOLBAR-FUNCTION.                      "#EC NOTEXT</font>
+<font color ="#0000FF">*  MOVE ICON_DESELECT_ALL TO LS_TOOLBAR-ICON.</font>
+<font color ="#0000FF">*  INSERT LS_TOOLBAR INTO I_OBJECT-&gt;MT_TOOLBAR INDEX 3.</font>
+<font color ="#0000FF">*  CLEAR LS_TOOLBAR.</font>
+
+ENDFORM. " HANDLE_TOOLBAR
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  HANDLE_DATA_CHANGED</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_ER_DATA_CHANGED  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM handle_data_changed USING sender ir_data_changed
+                          TYPE REF TO cl_alv_changed_data_protocol.
+
+<font color ="#0000FF">*  DATA: LS_MOD_CELL  TYPE LVC_S_MODI,</font>
+<font color ="#0000FF">*        LT_MOD_CELLS TYPE LVC_T_MODI,</font>
+<font color ="#0000FF">*        LV_VALUE     TYPE LVC_VALUE,</font>
+<font color ="#0000FF">*        LV_DATE_FROM TYPE LVC_VALUE,</font>
+<font color ="#0000FF">*        LV_LANDX     TYPE LANDX.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">** Check date valid from and date valid to</font>
+<font color ="#0000FF">*  CLEAR: LT_MOD_CELLS, LS_MOD_CELL, LV_VALUE.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LT_MOD_CELLS = IR_DATA_CHANGED-&gt;MT_MOD_CELLS.</font>
+<font color ="#0000FF">*  SORT LT_MOD_CELLS BY ROW_ID.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LOOP AT LT_MOD_CELLS INTO LS_MOD_CELL.</font>
+<font color ="#0000FF">*    CASE LS_MOD_CELL-FIELDNAME.</font>
+<font color ="#0000FF">*      WHEN 'G_BOX'.</font>
+<font color ="#0000FF">*        READ TABLE GT_ITAB INDEX LS_MOD_CELL-ROW_ID.</font>
+<font color ="#0000FF">*        IF SY-SUBRC = 0.</font>
+<font color ="#0000FF">*          GT_ITAB-G_BOX = LS_MOD_CELL-VALUE.</font>
+<font color ="#0000FF">*          MODIFY GT_ITAB INDEX LS_MOD_CELL-ROW_ID.</font>
+<font color ="#0000FF">*          CLEAR GT_ITAB.</font>
+<font color ="#0000FF">*        ENDIF.</font>
+<font color ="#0000FF">*    ENDCASE.</font>
+<font color ="#0000FF">*    CLEAR: LS_MOD_CELL, LV_VALUE.</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+ENDFORM. " HANDLE_DATA_CHANGED
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  HANDLE_USER_COMMAND</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_UCOMM  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM handle_user_command USING e_ucomm.
+
+  DATA: lt_rows TYPE lvc_t_row.
+
+  CASE e_ucomm.
+    WHEN 'CREATE'.
+      CALL METHOD g_grid-&gt;get_selected_rows
+        IMPORTING
+          et_index_rows = lt_rows.
+      CALL METHOD cl_gui_cfw=&gt;flush.
+
+      PERFORM create_pri TABLES lt_rows.
+      PERFORM refresh_display_data.
+    WHEN 'DELETE' .
+      CALL METHOD g_grid2-&gt;get_selected_rows
+        IMPORTING
+          et_index_rows = lt_rows.
+      CALL METHOD cl_gui_cfw=&gt;flush.
+
+      PERFORM delete_pri TABLES lt_rows.
+      PERFORM refresh_display_data2.
+<font color ="#0000FF">*    WHEN 'REFRESH'.</font>
+<font color ="#0000FF">*      PERFORM REFRESH_DISPLAY_DATA.</font>
+  ENDCASE.
+
+
+ENDFORM. " HANDLE_USER_COMMAND
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH_DISPLAY_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh_display_data .
+  CALL METHOD g_grid-&gt;refresh_table_display.
+ENDFORM. " REFRESH_DISPLAY_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CALL_TRANSACTIONS_MD63</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM call_transactions_md63 .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+  PERFORM bdc_dynpro USING :
+        'X' 'SAPMM60X'      '0105',
+<font color ="#0000FF">*        ' ' 'BDC_OKCODE'    '/00',</font>
+        ' ' 'AM60X-MATAW'   'X',
+        ' ' 'AM60X-MATNR'   gs_itab-matnr,
+        ' ' 'AM60X-PRGRP'   ' ',
+        ' ' 'AM60X-WERKS'   s_werks-low,
+        ' ' 'RM60X-BEDAE'   ' ',
+        ' ' 'AM60X-VERAW'   'X',
+        ' ' 'RM60X-VERSB'   gs_itab-versb,
+        ' ' 'RM60X-DATVE'   s_date,
+        ' ' 'RM60X-DATBE'   e_date.
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*        'X' 'SAPLM60E'      '0200'.</font>
+
+  CALL TRANSACTION 'MD63' USING bdc_tab.
+ENDFORM. " CALL_TRANSACTIONS_MD63
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_DYNPRO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_2252   text</font>
+<font color ="#0000FF">*      --&gt;P_2253   text</font>
+<font color ="#0000FF">*      --&gt;P_2254   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_dynpro USING dynbegin name value.
+  IF dynbegin = 'X'.
+    CLEAR bdc_tab.
+    MOVE: name              TO  bdc_tab-program,
+          value             TO  bdc_tab-dynpro,
+          'X'               TO  bdc_tab-dynbegin.
+    APPEND  bdc_tab.
+  ELSE.
+    CLEAR bdc_tab.
+    MOVE: name              TO  bdc_tab-fnam,
+          value             TO  bdc_tab-fval.
+    APPEND  bdc_tab.
+  ENDIF.
+ENDFORM. " BDC_DYNPRO
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  PRO_Y_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM pro_y_data .
+  LOOP AT gt_excel.
+    gt_itab-versb   = gt_excel-versb.
+    gt_itab-matnr   = gt_excel-matnr.
+    gt_itab-maktx   = gt_excel-maktx.
+    gt_itab-filed1  = gt_excel-m1.
+    gt_itab-filed2  = gt_excel-m2.
+    gt_itab-filed3  = gt_excel-m3.
+    gt_itab-filed4  = gt_excel-m4.
+    gt_itab-filed5  = gt_excel-m5.
+    gt_itab-filed6  = gt_excel-m6.
+    gt_itab-filed7  = gt_excel-m7.
+    gt_itab-filed8  = gt_excel-m8.
+    gt_itab-filed9  = gt_excel-m9.
+    gt_itab-filed10 = gt_excel-m10.
+    gt_itab-filed11 = gt_excel-m11.
+    gt_itab-filed12 = gt_excel-m12.
+    gt_itab-total   = gt_excel-m1 + gt_excel-m2 + gt_excel-m3
+                    + gt_excel-m4 + gt_excel-m5 + gt_excel-m6
+                    + gt_excel-m7 + gt_excel-m8 + gt_excel-m9
+                    + gt_excel-m10 + gt_excel-m11 + gt_excel-m12.
+
+    gt_itab-g_type  = gt_excel-g_type.
+    gt_itab-g_message = gt_excel-g_message.
+    APPEND gt_itab.
+  ENDLOOP.
+ENDFORM. " PRO_Y_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  PRO_M_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM pro_m_data .
+  FIELD-SYMBOLS &lt;l_filed&gt;.
+  DATA l_col(40).
+  DATA sum(13)    TYPE i.
+  DATA sum1(13)   TYPE i.
+  DATA number(02) TYPE c.
+
+
+  LOOP AT gt_excel.
+    gt_itab-versb   = gt_excel-versb.
+    gt_itab-matnr   = gt_excel-matnr.
+    gt_itab-maktx   = gt_excel-maktx.
+
+    SORT gt_sum BY day1.
+    READ TABLE gt_sum INDEX 1.
+    DO gt_sum-sum TIMES.
+      CLEAR : sum ,sum1.
+      IF gt_excel-m1 &gt; 4.
+        sum = gt_excel-m1 / gt_sum-sum.
+      ENDIF.
+      number = number + 1.
+      CONCATENATE 'GT_ITAB-FILED' number INTO l_col.
+      ASSIGN (l_col) TO &lt;l_filed&gt;.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDDO.
+    IF gt_excel-m1 &lt; 4.
+      MOVE gt_excel-m1 TO &lt;l_filed&gt;.
+    ENDIF.
+    sum1 = ( sum * gt_sum-sum ) - gt_excel-m1.
+    IF sum1 &gt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ELSEIF sum1 &lt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDIF.
+
+
+    SORT gt_sum BY day1.
+    READ TABLE gt_sum INDEX 2.
+    DO gt_sum-sum TIMES.
+      CLEAR : sum ,sum1.
+      IF gt_excel-m2 &gt; 4.
+        sum = gt_excel-m2 / gt_sum-sum.
+      ENDIF.
+      number = number + 1.
+      CONCATENATE 'GT_ITAB-FILED' number INTO l_col.
+      ASSIGN (l_col) TO &lt;l_filed&gt;.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDDO.
+    IF gt_excel-m2 &lt; 4.
+      MOVE gt_excel-m2 TO &lt;l_filed&gt;.
+    ENDIF.
+    sum1 = ( sum * gt_sum-sum ) - gt_excel-m2.
+    IF sum1 &gt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ELSEIF sum1 &lt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDIF.
+
+    SORT gt_sum BY day1.
+    READ TABLE gt_sum INDEX 3.
+    DO gt_sum-sum TIMES.
+      CLEAR : sum ,sum1.
+      IF gt_excel-m3 &gt; 4.
+        sum = gt_excel-m3 / gt_sum-sum.
+      ENDIF.
+      number = number + 1.
+      CONCATENATE 'GT_ITAB-FILED' number INTO l_col.
+      ASSIGN (l_col) TO &lt;l_filed&gt;.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDDO.
+    IF gt_excel-m3 &lt; 4.
+      MOVE gt_excel-m3 TO &lt;l_filed&gt;.
+    ENDIF.
+    sum1 = ( sum * gt_sum-sum ) - gt_excel-m3.
+    IF sum1 &gt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ELSEIF sum1 &lt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDIF.
+
+    SORT gt_sum BY day1.
+    READ TABLE gt_sum INDEX 4.
+    CLEAR : sum ,sum1.
+    DO gt_sum-sum TIMES.
+      IF gt_excel-m4 &gt; 4.
+        sum = gt_excel-m4 / gt_sum-sum.
+      ENDIF.
+      number = number + 1.
+      CONCATENATE 'GT_ITAB-FILED' number INTO l_col.
+      ASSIGN (l_col) TO &lt;l_filed&gt;.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDDO.
+    IF gt_excel-m4 &lt; 4.
+      MOVE gt_excel-m4 TO &lt;l_filed&gt;.
+    ENDIF.
+    sum1 = ( sum * gt_sum-sum ) - gt_excel-m4.
+    IF sum1 &gt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ELSEIF sum1 &lt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDIF.
+
+    SORT gt_sum BY day1.
+    READ TABLE gt_sum INDEX 5.
+    CLEAR : sum ,sum1.
+    DO gt_sum-sum TIMES.
+      IF gt_excel-m5 &gt; 4.
+        sum = gt_excel-m5 / gt_sum-sum.
+      ENDIF.
+      number = number + 1.
+      CONCATENATE 'GT_ITAB-FILED' number INTO l_col.
+      ASSIGN (l_col) TO &lt;l_filed&gt;.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDDO.
+    IF gt_excel-m5 &lt; 4.
+      MOVE gt_excel-m5 TO &lt;l_filed&gt;.
+    ENDIF.
+    sum1 = ( sum * gt_sum-sum ) - gt_excel-m5.
+    IF sum1 &gt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ELSEIF sum1 &lt; 0.
+      sum  = sum - sum1.
+      MOVE    sum    TO &lt;l_filed&gt;.
+    ENDIF.
+
+    gt_itab-total   = gt_excel-m1 + gt_excel-m2 + gt_excel-m3
+                    + gt_excel-m4 + gt_excel-m5.
+    gt_itab-g_type  = gt_excel-g_type.
+    gt_itab-g_message = gt_excel-g_message.
+    APPEND gt_itab.
+    CLEAR  number.
+  ENDLOOP.
+ENDFORM. " PRO_M_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_HEADER_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_header_data .
+  DATA h_year(04).
+  DATA h_month1(07).
+  DATA high(07).
+  DATA h_monthly(06).
+  DATA h_month(02).
+  p_namber = p_pbdnr.
+  SELECT SINGLE name1 INTO g_name1
+  FROM t001w
+ WHERE werks = s_werks-low.
+
+  CONCATENATE s_werks-low '(' g_name1 ')' INTO name1.
+  IF p_rad1 = 'X'.
+    text1 = TEXT-025.
+    low1 = p_year.
+    text2 = TEXT-027.
+    CONCATENATE p_year '01' '01' INTO s_date.
+    CONCATENATE p_year '12' '31' INTO e_date.
+  ELSEIF p_rad2 = 'X'.
+    text1 = TEXT-026.
+    text2 = TEXT-028.
+    CONCATENATE p_month(04) '.' p_month+04(02) INTO h_month1.
+
+    h_monthly = p_month + 4.
+    CONCATENATE h_monthly(04) '.' h_monthly+04(02) INTO high.
+    IF h_monthly+04(02) &gt; 12.
+      h_year = p_month(04) + 1.
+      h_month =  h_monthly+04(02) - 12.
+      IF h_month &lt; 10.
+        CONCATENATE h_year '.' '0' h_month INTO high.
+      ELSE.
+        CONCATENATE h_year '.' h_month INTO high.
+      ENDIF.
+    ENDIF.
+    CONCATENATE h_month1 '~' high INTO low1.
+    CONCATENATE p_month '01' INTO s_date.
+    CONCATENATE high(04)  high+05(02)  '01'   INTO e_date.
+
+    CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+      EXPORTING
+        day_in            = e_date
+      IMPORTING
+        last_day_of_month = e_date
+      EXCEPTIONS
+        day_in_no_date    = 1
+        OTHERS            = 2.
+  ENDIF.
+
+ENDFORM. " GET_HEADER_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHECK_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM check_data .
+  CLEAR gt_itab.
+  READ TABLE gt_itab WITH KEY g_type = 'E'.
+  IF sy-subrc = 0.
+    MESSAGE e000 WITH 'Red icon can not processing'.
+  ENDIF.
+ENDFORM. " CHECK_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_MD74_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_md74_data .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+  PERFORM bdc_dynpro USING :
+        'X' 'RM60RR20'      '1000',
+        ' ' 'BDC_OKCODE'    '=ONLI',
+        ' ' 'WERKS-LOW'     s_werks-low,
+        ' ' 'WERKS-HIGH'    ' '.
+<font color ="#0000FF">*  20121025 ## ### #### ##</font>
+  PERFORM bdc_dynpro USING :
+        ' ' 'MATNR-LOW'     gt_itab-matnr.
+<font color ="#0000FF">*  IF P_RAD4 = 'X'.</font>
+<font color ="#0000FF">*    PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*    ' ' 'MATNR-LOW'     GT_ITAB-MATNR.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*    PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*    ' ' 'MATNR-LOW'     ' '.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+  PERFORM bdc_dynpro USING :
+       ' ' 'MATNR-HIGH'    ' ',
+       ' ' 'BEDAE-LOW'     ' ',
+       ' ' 'BEDAE-HIGH'    ' ',
+       ' ' 'PBDNR-LOW'     ' ',
+       ' ' 'PBDNR-HIGH'    'ZZZZZZZZZZ',
+       ' ' 'VERSB-LOW'     versb-low,
+       ' ' 'VERSB-HIGH'    versb-high,
+       ' ' 'DATE1'         e_date,
+       ' ' 'HISTFLAG'      'X',
+       ' ' 'INACFLAG'      'X',
+       ' ' 'LISTFLAG'      'X',
+       ' ' 'TESTFLAG'      ' '.
+
+  PERFORM call_transaction  USING 'MD74'.
+ENDFORM. " BDC_MD74_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CALL_TRANSACTION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_3688   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM call_transaction USING p_tcode.
+
+  DATA : opt TYPE ctu_params.
+  CLEAR opt.
+  opt-defsize  = 'X'.
+  opt-racommit = 'X'.
+  opt-updmode  = 'S'.
+  opt-dismode  = 'N'.
+
+  CALL TRANSACTION p_tcode
+             USING bdc_tab
+      OPTIONS FROM opt
+     MESSAGES INTO gt_message.
+  IF sy-subrc = 0.
+    COMMIT WORK.
+  ENDIF.
+ENDFORM. " CALL_TRANSACTION
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_MD75_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_md75_data .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+  PERFORM bdc_dynpro USING :
+        'X' 'RM60RR30'      '1000',
+        ' ' 'BDC_OKCODE'    '=ONLI',
+        ' ' 'WERKS-LOW'     s_werks-low,
+        ' ' 'WERKS-HIGH'    ' '.
+<font color ="#0000FF">*  20121025 ## ### #### ##</font>
+  PERFORM bdc_dynpro USING :
+        ' ' 'MATNR-LOW'     gt_itab-matnr.
+<font color ="#0000FF">*  IF P_RAD4 = 'X'.</font>
+<font color ="#0000FF">*    PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*    ' ' 'MATNR-LOW'     GT_ITAB-MATNR.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*    PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*    ' ' 'MATNR-LOW'     ' '.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+  PERFORM bdc_dynpro USING :
+      ' ' 'MATNR-HIGH'    ' ',
+      ' ' 'BEDAE-LOW'     ' ',
+      ' ' 'BEDAE-HIGH'    ' ',
+      ' ' 'PBDNR-LOW'     ' ',
+      ' ' 'PBDNR-HIGH'    'ZZZZZZZZZZ',
+      ' ' 'VERSB-LOW'     versb-low,
+      ' ' 'VERSB-HIGH'    versb-high,
+      ' ' 'DATE1'         e_date,
+      ' ' 'LISTFLAG'      'X',
+      ' ' 'TESTFLAG'      ' ',
+      ' ' 'ENTMFLAG'      ' '.
+
+  PERFORM call_transaction  USING 'MD75'.
+ENDFORM. " BDC_MD75_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_MD76_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_md76_data .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+
+  PERFORM bdc_dynpro USING :
+        'X' 'RM60RR40'      '1000',
+        ' ' 'BDC_OKCODE'    '=ONLI',
+        ' ' 'WERKS-LOW'     s_werks-low,
+        ' ' 'WERKS-HIGH'    ' '.
+<font color ="#0000FF">*  20121025 ## ### #### ##</font>
+  PERFORM bdc_dynpro USING :
+        ' ' 'MATNR-LOW'     gt_itab-matnr.
+<font color ="#0000FF">*  IF P_RAD4 = 'X'.</font>
+<font color ="#0000FF">*    PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*    ' ' 'MATNR-LOW'     GT_ITAB-MATNR.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*    PERFORM BDC_DYNPRO USING :</font>
+<font color ="#0000FF">*    ' ' 'MATNR-LOW'     ' '.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+  PERFORM bdc_dynpro USING :
+      ' ' 'MATNR-HIGH'    ' ',
+      ' ' 'BEDAE-LOW'     ' ',
+      ' ' 'BEDAE-HIGH'    ' ',
+      ' ' 'PBDNR-LOW'     ' ',
+      ' ' 'PBDNR-HIGH'    'ZZZZZZZZZZ',
+      ' ' 'VERSB-LOW'     versb-low,
+      ' ' 'VERSB-HIGH'    versb-high,
+      ' ' 'HDATE'         e_date,
+      ' ' 'LISTFLAG'      'X',
+      ' ' 'TESTFLAG'      ' '.
+
+  PERFORM call_transaction  USING 'MD76'.
+ENDFORM. " BDC_MD76_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BAPI_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bapi_data .
+  DATA : ls_bapisitemr  LIKE bapisitemr.
+  DATA : lt_bapisshdin  LIKE bapisshdin OCCURS 0 WITH HEADER LINE.
+  DATA : lt_bapireturn1 LIKE bapireturn1 OCCURS 0 WITH HEADER LINE.
+
+  DATA : l_line(2) TYPE c.
+  DATA : l_tabname(30).
+  DATA : l_qyt LIKE bapisshdin-req_qty.
+
+
+  FIELD-SYMBOLS: &lt;fs&gt;.
+  LOOP AT gt_itab.
+    CLEAR : lt_bapireturn1,  lt_bapireturn1[],
+            lt_bapisshdin,   lt_bapisshdin[],
+            ls_bapisitemr.
+
+
+
+    ls_bapisitemr-material   = gt_itab-matnr.
+    ls_bapisitemr-plant      = s_werks-low.
+    ls_bapisitemr-version    = gt_itab-versb.
+    ls_bapisitemr-req_number = p_pbdnr.
+    ls_bapisitemr-vers_activ = ' '.
+
+    CLEAR l_line.
+    IF p_rad1 = 'X'.
+      LOOP AT y_date.
+        l_line = l_line + 1.
+        CLEAR l_tabname.
+        CONCATENATE 'GT_ITAB-FILED' l_line INTO l_tabname.
+        ASSIGN (l_tabname) TO &lt;fs&gt;.
+        IF &lt;fs&gt; &lt;&gt; '' AND
+           &lt;fs&gt; &lt;&gt; 0.
+          CLEAR l_qyt.
+          l_qyt = &lt;fs&gt;.
+          lt_bapisshdin-date_type = '3'.
+          lt_bapisshdin-req_date  = y_date-day.
+          lt_bapisshdin-req_qty   = l_qyt.
+          APPEND lt_bapisshdin.
+        ENDIF.
+      ENDLOOP.
+    ELSEIF p_rad2 = 'X'.
+      LOOP AT m_day.
+        l_line = l_line + 1.
+        CLEAR l_tabname.
+        CONCATENATE 'GT_ITAB-FILED' l_line INTO l_tabname.
+        ASSIGN (l_tabname) TO &lt;fs&gt;.
+        IF &lt;fs&gt; &lt;&gt; '' AND
+           &lt;fs&gt; &lt;&gt; 0.
+          CLEAR l_qyt.
+          l_qyt = &lt;fs&gt;.
+          lt_bapisshdin-date_type = '2'.
+          lt_bapisshdin-req_date  = m_day-day.
+          lt_bapisshdin-req_qty   = l_qyt.
+          APPEND lt_bapisshdin.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+    CALL FUNCTION 'BAPI_REQUIREMENTS_CREATE'
+      EXPORTING
+        requirements_item        = ls_bapisitemr
+<font color ="#0000FF">*       DO_COMMIT                = 'X'</font>
+<font color ="#0000FF">*       UPDATE_MODE              = 'X'</font>
+<font color ="#0000FF">*       REFER_TYPE               = ' '</font>
+<font color ="#0000FF">*       PROFILID                 = ' '</font>
+      TABLES
+        requirements_schedule_in = lt_bapisshdin
+        return                   = lt_bapireturn1.
+
+    IF lt_bapireturn1[] IS INITIAL.
+      CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+        EXPORTING
+          wait = 'X'.
+      gs4 = gs4 + 1.
+      gt_itab-bdc_type = 'S'.
+      gt_itab-g_icon = icon_checked.
+<font color ="#0000FF">*      GT_ITAB-G_BOX  = ' '.</font>
+    ELSE.
+      READ TABLE lt_bapireturn1 INDEX 1.
+      IF lt_bapireturn1-type &lt;&gt; 'E'.
+        CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+          EXPORTING
+            wait = 'X'.
+        gs4 = gs4 + 1.
+        gt_itab-bdc_type = 'S'.
+        gt_itab-g_icon = icon_checked.
+<font color ="#0000FF">*        GT_ITAB-G_BOX  = ' '.</font>
+      ELSE.
+        CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
+        gs5 = gs5 + 1.
+        gt_itab-bdc_type = 'E'.
+        gt_itab-g_icon = icon_incomplete.
+      ENDIF.
+      gt_itab-g_type    = lt_bapireturn1-type.
+      gt_itab-g_message = lt_bapireturn1-message.
+    ENDIF.
+    MODIFY gt_itab.
+    CLEAR  gt_itab.
+  ENDLOOP.
+ENDFORM. " BAPI_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  YEAR_DATE_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM year_date_2 .
+  DATA d_number(02).
+  DATA d_daynr LIKE hrvsched-daynr.
+
+  DO 12 TIMES.
+    d_number = d_number + 1.
+    IF d_number &lt; 10.
+      CONCATENATE '0' d_number INTO d_number.
+    ENDIF.
+    CONCATENATE p_year '.' d_number INTO y_date-month.
+    APPEND y_date.
+  ENDDO.
+
+  LOOP AT y_date.
+    CONCATENATE y_date-month(04) y_date-month+05(02)
+                '01' INTO y_date-day.
+    MODIFY y_date.
+  ENDLOOP.
+ENDFORM. " YEAR_DATE_2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  MONTH_DATE_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM month_date_2 .
+  DATA m_year  LIKE p_year.
+  DATA m_month LIKE p_month.
+  DATA n_month(02) TYPE c.
+  DATA d_day  LIKE sy-datum.
+  DATA m_month1 LIKE m_month.
+  DATA week_number(02) TYPE c.
+
+  DATA : l_week LIKE scal-week.
+
+
+  CONCATENATE p_month '01' INTO m_date-m_low .
+  APPEND m_date.
+
+  DO 4 TIMES.
+    SORT m_date DESCENDING BY m_low.
+    READ TABLE m_date INDEX 1.
+    IF m_date-m_low+04(02) = 12.
+      m_year = p_month(04) + 01.
+      CONCATENATE m_year '01' '01' INTO m_date-m_low.
+      APPEND m_date.
+    ELSE.
+      CLEAR m_month.
+      n_month = m_date-m_low+04(02) + 1.
+      IF n_month &lt; 10.
+        CONCATENATE '0' n_month INTO n_month.
+      ENDIF.
+      CONCATENATE m_date-m_low(04) n_month INTO m_month.
+      CONCATENATE m_month '01' INTO m_date-m_low.
+      APPEND m_date.
+    ENDIF.
+  ENDDO.
+
+  SORT m_date BY m_low.
+  LOOP AT m_date.
+    CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+      EXPORTING
+        day_in            = m_date-m_low
+      IMPORTING
+        last_day_of_month = m_date-m_high
+      EXCEPTIONS
+        day_in_no_date    = 1
+        OTHERS            = 2.
+    MODIFY m_date.
+
+    CALL FUNCTION 'FIMA_DAYS_AND_MONTHS_AND_YEARS'
+      EXPORTING
+        i_date_from    = m_date-m_low
+        i_key_day_from = '00'
+        i_date_to      = m_date-m_high
+        i_key_day_to   = '00'
+        i_flg_separate = ''
+      IMPORTING
+        e_days         = m_date-sum.
+    CLEAR d_day.
+
+    d_day = m_date-m_low.
+
+    CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+      EXPORTING
+        langu = sy-langu
+        date  = d_day
+      IMPORTING
+        daynr = m_day-daynr.
+
+    IF m_day-daynr = 6.
+      m_day-type = 'X'.
+      m_day-day  = d_day.
+      m_day-week = '-W1'.
+      week_number = 1.
+      m_day-day1 = m_day-day(06).
+      CONCATENATE m_day-day(04) '.' m_day-day+04(02)
+            m_day-week INTO m_day-week.
+      APPEND m_day.
+    ENDIF.
+
+
+    DO  m_date-sum TIMES.
+
+      CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL_ZA'
+        EXPORTING
+          date      = d_day
+          days      = '1'
+          months    = '00'
+          signum    = '+'
+          years     = '00'
+        IMPORTING
+          calc_date = d_day.
+
+      m_day-day = d_day.
+
+      CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+        EXPORTING
+          langu = sy-langu
+          date  = m_day-day
+        IMPORTING
+          daynr = m_day-daynr.
+
+      IF m_day-daynr = 6.
+        m_day-type = 'X'.
+        IF m_month1 &lt;&gt; m_day-day(06).
+          IF week_number IS NOT INITIAL.
+            m_day-type = 'X'.
+            week_number = week_number + 1.
+            CONCATENATE '-W' week_number INTO m_day-week.
+          ELSE.
+            m_month1 = m_day-day.
+            m_day-week = '-W1'.
+            week_number = 1.
+          ENDIF.
+        ELSEIF m_month1 = m_day-day(06).
+          week_number = week_number + 1.
+          CONCATENATE '-W' week_number INTO m_day-week.
+        ENDIF.
+        m_day-day1 = m_day-day(06).
+        m_day-sum = 1.
+        CONCATENATE m_day-day(04) '.' m_day-day+04(02)
+                    m_day-week INTO m_day-week.
+        IF week_number &lt;&gt; 1.
+          CLEAR l_week.
+          CALL FUNCTION 'DATE_GET_WEEK'
+            EXPORTING
+              date         = m_day-day
+            IMPORTING
+              week         = l_week
+            EXCEPTIONS
+              date_invalid = 1
+              OTHERS       = 2.
+
+          CALL FUNCTION 'WEEK_GET_FIRST_DAY'
+            EXPORTING
+              week         = l_week
+            IMPORTING
+              date         = m_day-day
+            EXCEPTIONS
+              week_invalid = 1
+              OTHERS       = 2.
+
+          CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+            EXPORTING
+              langu = sy-langu
+              date  = m_day-day
+            IMPORTING
+              daynr = m_day-daynr.
+        ENDIF.
+
+        APPEND m_day.
+      ENDIF.
+
+      IF m_day-day = m_date-m_high.
+        IF m_day-daynr &lt; 6.
+          m_day-type = 'X'.
+          IF m_month1 &lt;&gt; m_day-day(06).
+            m_month1 = m_day-day.
+            m_day-week = '-W1'.
+            week_number = 1.
+          ELSEIF m_month1 = m_day-day(06).
+            week_number = week_number + 1.
+            CONCATENATE '-W' week_number INTO m_day-week.
+          ENDIF.
+          m_day-day1 = m_day-day(06).
+          m_day-sum = 1.
+          CONCATENATE m_day-day(04) '.' m_day-day+04(02)
+                      m_day-week INTO m_day-week.
+
+          IF week_number &lt;&gt; 1.
+            CLEAR l_week.
+
+            CALL FUNCTION 'DATE_GET_WEEK'
+              EXPORTING
+                date         = m_day-day
+              IMPORTING
+                week         = l_week
+              EXCEPTIONS
+                date_invalid = 1
+                OTHERS       = 2.
+
+            CALL FUNCTION 'WEEK_GET_FIRST_DAY'
+              EXPORTING
+                week         = l_week
+              IMPORTING
+                date         = m_day-day
+              EXCEPTIONS
+                week_invalid = 1
+                OTHERS       = 2.
+
+            CALL FUNCTION 'RH_GET_DATE_DAYNAME'
+              EXPORTING
+                langu = sy-langu
+                date  = m_day-day
+              IMPORTING
+                daynr = m_day-daynr.
+          ENDIF.
+
+          APPEND m_day.
+        ENDIF.
+      ENDIF.
+    ENDDO.
+    CLEAR week_number.
+  ENDLOOP.
+
+  LOOP AT m_day.
+    MOVE-CORRESPONDING m_day TO gt_sum.
+    COLLECT gt_sum.
+    CLEAR   gt_sum.
+  ENDLOOP.
+  SORT gt_sum BY day1.
+ENDFORM. " MONTH_DATE_2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_PBIM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_pbim .
+  DATA : l_mtart LIKE mara-mtart.
+  DATA : l_datum LIKE sy-datum.
+<font color ="#0000FF">*  ### ##</font>
+  CASE 'X'.
+    WHEN p_rad3.
+      %%range_set gr_mtart 'FERT' ''.
+      %%range_set gr_mtart 'FERM' ''.
+    WHEN p_rad4.
+      %%range_set gr_mtart 'HALB' ''.
+  ENDCASE.
+<font color ="#0000FF">*  ## ## ##</font>
+  CASE 'X'.
+    WHEN p_rad1.
+      MOVE: 'I'    TO gr_versb-sign,
+          'CP'   TO gr_versb-option,
+          'Y*'     TO gr_versb-low.
+      APPEND gr_versb    TO gr_versb.
+
+      MOVE: 'I'    TO gr_pdatu-sign,
+            'BT'   TO gr_pdatu-option.
+      CONCATENATE p_year '01' '01' INTO gr_pdatu-low.
+      CONCATENATE p_year '12' '31' INTO gr_pdatu-high.
+      APPEND gr_pdatu    TO gr_pdatu.
+
+    WHEN p_rad2.
+      MOVE: 'I'    TO gr_versb-sign,
+          'CP'   TO gr_versb-option,
+          'M*'     TO gr_versb-low.
+      APPEND gr_versb    TO gr_versb.
+
+      CONCATENATE p_month '01' INTO l_datum.
+
+      CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+        EXPORTING
+          date      = l_datum
+          days      = 0
+          months    = 4
+          signum    = '+'
+          years     = 0
+        IMPORTING
+          calc_date = l_datum.
+
+      MOVE: 'I'    TO gr_pdatu-sign,
+          'LE'   TO gr_pdatu-option,
+          l_datum TO gr_pdatu-low.
+<font color ="#0000FF">*      CONCATENATE L_DATUM(6) '%' INTO GR_PDATU-LOW.</font>
+      APPEND gr_pdatu    TO gr_pdatu.
+
+  ENDCASE.
+
+  SELECT a~werks a~versb a~pbdnr a~matnr c~maktx b~mtart b~matkl
+         d~pdatu
+    INTO CORRESPONDING FIELDS OF TABLE gt_list
+    FROM pbim AS a INNER JOIN mara AS b ON a~matnr = b~matnr
+    INNER JOIN makt AS c ON a~matnr = c~matnr
+    INNER JOIN pbed AS d ON a~bdzei = d~bdzei
+   WHERE a~werks IN s_werks
+     AND b~mtart IN gr_mtart
+     AND a~versb IN gr_versb
+     AND d~pdatu IN gr_pdatu
+     AND c~spras = sy-langu.
+
+  SORT gt_list BY versb matnr.
+
+  LOOP AT gt_itab.
+    DELETE gt_list WHERE versb = gt_itab-versb
+                     AND matnr = gt_itab-matnr.
+  ENDLOOP.
+
+  SORT gt_list.
+  DELETE ADJACENT DUPLICATES FROM gt_list COMPARING ALL FIELDS.
+
+ENDFORM. " GET_PBIM
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CREAT_CON</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM creat_con .
+<font color ="#0000FF">*  IF G_DOCKING_CONTAINER IS INITIAL.</font>
+  CREATE OBJECT g_docking_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = g_docking_container-&gt;dock_at_top
+      extension = 200.
+
+  CREATE OBJECT document
+    EXPORTING
+      style = 'ALV_GRID'.
+
+  CREATE OBJECT splitter
+    EXPORTING
+      parent  = g_docking_container
+      columns = 1
+      rows    = 2.
+
+  CALL METHOD splitter-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = parent1.
+
+  CALL METHOD splitter-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = parent2.
+
+  CALL METHOD splitter-&gt;set_row_height
+    EXPORTING
+      id     = 1
+      height = 25.
+
+  CREATE OBJECT g_grid
+    EXPORTING
+      i_parent = parent2.
+<font color ="#0000FF">*  ENDIF.</font>
+
+<font color ="#0000FF">*  CREATE OBJECT G_GRID</font>
+<font color ="#0000FF">*    EXPORTING</font>
+<font color ="#0000FF">*      I_PARENT = G_DOCKING_CONTAINER.</font>
+
+  IF gt_list[] IS NOT INITIAL.
+    CREATE OBJECT g_docking_container2
+      EXPORTING
+        repid     = sy-repid
+        dynnr     = sy-dynnr
+        side      = g_docking_container-&gt;dock_at_bottom
+        extension = 100.
+
+    CREATE OBJECT g_grid2
+      EXPORTING
+        i_parent = g_docking_container2.
+  ENDIF.
+ENDFORM. " CREAT_CON
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  ALV_HEADER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_header .
+  DATA : l_text(255) TYPE c.
+
+  CLEAR l_text.
+  CASE 'X'.
+    WHEN p_rad3.
+      CONCATENATE 'YEARLY' ':' p_year INTO l_text SEPARATED BY space.
+    WHEN p_rad4.
+      CONCATENATE 'MONTHLY' ':' p_month INTO l_text SEPARATED BY space.
+  ENDCASE.
+
+  CALL METHOD document-&gt;add_gap.
+  CALL METHOD document-&gt;add_text
+    EXPORTING
+      sap_fontsize = cl_dd_document=&gt;small
+      sap_emphasis = cl_dd_document=&gt;strong
+      text         = l_text.
+
+  CALL METHOD document-&gt;new_line.
+
+  CLEAR l_text.
+  CONCATENATE 'Reqment Plan : ' p_pbdnr INTO l_text.
+  CALL METHOD document-&gt;add_gap.
+  CALL METHOD document-&gt;add_text
+    EXPORTING
+      sap_fontsize = cl_dd_document=&gt;small
+      sap_emphasis = cl_dd_document=&gt;strong
+      text         = l_text.
+
+  CALL METHOD document-&gt;new_line.
+
+  DATA : l_lines(5) TYPE c.
+  CLEAR l_lines.
+  l_lines = g_lines.
+
+  CLEAR l_text.
+  CONCATENATE 'Excel Upload Success : ' l_lines INTO l_text.
+  CALL METHOD document-&gt;add_gap.
+  CALL METHOD document-&gt;add_text
+    EXPORTING
+      sap_fontsize = cl_dd_document=&gt;small
+      sap_emphasis = cl_dd_document=&gt;strong
+      text         = l_text.
+
+  CALL METHOD document-&gt;new_line.
+
+<font color ="#0000FF">*  G_LINES = G_LINES - G_COUNT.</font>
+
+  CLEAR l_lines.
+  l_lines = g_count.
+
+  CLEAR l_text.
+  CONCATENATE 'Excel Upload Error : ' l_lines INTO l_text.
+  CALL METHOD document-&gt;add_gap.
+  CALL METHOD document-&gt;add_text
+    EXPORTING
+      sap_fontsize = cl_dd_document=&gt;small
+      sap_emphasis = cl_dd_document=&gt;strong
+      text         = l_text.
+
+  CALL METHOD document-&gt;new_line.
+
+
+  IF html_control IS INITIAL.
+    CREATE OBJECT html_control
+      EXPORTING
+        parent = parent1.
+  ENDIF.
+
+  CALL METHOD document-&gt;merge_document.
+  document-&gt;html_control = html_control.
+
+  CALL METHOD document-&gt;display_document
+    EXPORTING
+      reuse_control      = 'X'
+      parent             = parent1
+    EXCEPTIONS
+      html_display_error = 1.
+  IF sy-subrc &lt;&gt; 0.
+    MESSAGE s000 WITH 'ERROR TOP OF PAGE'.
+  ENDIF.
+
+ENDFORM. " ALV_HEADER
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  REFRESH_DISPLAY_DATA2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM refresh_display_data2 .
+  CALL METHOD g_grid2-&gt;refresh_table_display.
+ENDFORM. " REFRESH_DISPLAY_DATA2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CREATE_PRI</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM create_pri TABLES p_lt_rows TYPE lvc_t_row.
+  DATA : idx LIKE sy-tabix.
+  LOOP AT p_lt_rows.
+<font color ="#0000FF">*LOOP AT GT_ITAB.</font>
+<font color ="#0000FF">*  CLEAR IDX.</font>
+<font color ="#0000FF">*  IDX = SY-TABIX.</font>
+    gs6 = gs1.
+    READ TABLE gt_itab INDEX p_lt_rows-index.
+    CHECK sy-subrc = 0.
+    CLEAR : versb-low,versb-high.
+    IF gt_itab-bdc_type &lt;&gt; 'S'.
+      IF p_rad1 = 'X'.
+        versb-low = 'Y1'.
+        versb-high = 'Y6'.
+      ELSEIF p_rad2 = 'X'.
+        versb-low = 'M1'.
+        versb-high = 'M6'.
+      ENDIF.
+      PERFORM bdc_md74_data.
+      PERFORM bdc_md75_data.
+      PERFORM bdc_md76_data.
+    ENDIF.
+<font color ="#0000FF">*    PERFORM BAPI_DATA.</font>
+    PERFORM bapi_data2 USING p_lt_rows-index.
+  ENDLOOP.
+ENDFORM. " CREATE_PRI
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DELETE_PRI</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LT_ROWS  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM delete_pri TABLES p_lt_rows TYPE lvc_t_row.
+
+  LOOP AT p_lt_rows.
+    CLEAR gt_list.
+    READ TABLE gt_list INDEX p_lt_rows-index.
+    CHECK sy-subrc = 0.
+    PERFORM bdc_md74_data2.
+    PERFORM bdc_md75_data2.
+    PERFORM bdc_md76_data2.
+    MODIFY gt_list INDEX p_lt_rows-index.
+  ENDLOOP.
+
+ENDFORM. " DELETE_PRI
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_MD74_DATA2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_md74_data2 .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+
+  DATA :l_datum LIKE sy-datum.
+  CLEAR l_datum.
+
+  CASE 'X'.
+    WHEN p_rad3."YEAR
+      CONCATENATE p_year '1231' INTO l_datum.
+    WHEN p_rad4."MONTH
+<font color ="#0000FF">*      ### + 5</font>
+      CONCATENATE p_month '01' INTO l_datum.
+      CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+        EXPORTING
+          date      = l_datum
+          days      = 0
+          months    = 4
+          signum    = '+'
+          years     = 0
+        IMPORTING
+          calc_date = l_datum.
+<font color ="#0000FF">*### +5 ## ### ##</font>
+      CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+        EXPORTING
+          day_in            = l_datum
+        IMPORTING
+          last_day_of_month = l_datum
+        EXCEPTIONS
+          day_in_no_date    = 1
+          OTHERS            = 2.
+  ENDCASE.
+
+  PERFORM bdc_dynpro USING :
+       'X' 'RM60RR20'      '1000',
+       ' ' 'BDC_OKCODE'    '=ONLI',
+       ' ' 'WERKS-LOW'     s_werks-low,
+       ' ' 'WERKS-HIGH'    ' ',
+       ' ' 'MATNR-LOW'     gt_list-matnr,
+       ' ' 'MATNR-HIGH'    ' ',
+       ' ' 'BEDAE-LOW'     ' ',
+       ' ' 'BEDAE-HIGH'    ' ',
+       ' ' 'PBDNR-LOW'     gt_list-pbdnr,
+       ' ' 'PBDNR-HIGH'    ' ',
+       ' ' 'VERSB-LOW'     gt_list-versb,
+       ' ' 'VERSB-HIGH'    ' ',
+       ' ' 'DATE1'         l_datum,
+       ' ' 'HISTFLAG'      'X',
+       ' ' 'INACFLAG'      'X',
+       ' ' 'LISTFLAG'      'X',
+       ' ' 'TESTFLAG'      ' '.
+
+  PERFORM call_transaction  USING 'MD74'.
+
+  READ TABLE gt_message INDEX 1.
+  IF gt_message-msgtyp = 'E'.
+    gt_list-g_icon = icon_led_red.
+    gt_list-message = gt_message-msgv1.
+  ELSE.
+    gt_list-g_icon = icon_led_green.
+  ENDIF.
+
+ENDFORM. " BDC_MD74_DATA2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_MD75_DATA2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_md75_data2 .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+
+  DATA :l_datum LIKE sy-datum.
+  CLEAR l_datum.
+
+  CASE 'X'.
+    WHEN p_rad3."YEAR
+      CONCATENATE p_year '1231' INTO l_datum.
+    WHEN p_rad4."MONTH
+<font color ="#0000FF">*      ### + 5</font>
+      CONCATENATE p_month '01' INTO l_datum.
+      CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+        EXPORTING
+          date      = l_datum
+          days      = 0
+          months    = 4
+          signum    = '+'
+          years     = 0
+        IMPORTING
+          calc_date = l_datum.
+<font color ="#0000FF">*### +5 ## ### ##</font>
+      CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+        EXPORTING
+          day_in            = l_datum
+        IMPORTING
+          last_day_of_month = l_datum
+        EXCEPTIONS
+          day_in_no_date    = 1
+          OTHERS            = 2.
+  ENDCASE.
+
+  PERFORM bdc_dynpro USING :
+        'X' 'RM60RR30'      '1000',
+        ' ' 'BDC_OKCODE'    '=ONLI',
+        ' ' 'WERKS-LOW'     s_werks-low,
+        ' ' 'WERKS-HIGH'    ' ',
+        ' ' 'MATNR-LOW'     gt_list-matnr,
+        ' ' 'MATNR-HIGH'    ' ',
+        ' ' 'BEDAE-LOW'     ' ',
+        ' ' 'BEDAE-HIGH'    ' ',
+        ' ' 'PBDNR-LOW'     gt_list-pbdnr,
+        ' ' 'PBDNR-HIGH'    ' ',
+        ' ' 'VERSB-LOW'     gt_list-versb,
+        ' ' 'VERSB-HIGH'    gt_list-versb,
+        ' ' 'DATE1'         l_datum,
+        ' ' 'LISTFLAG'      'X',
+        ' ' 'TESTFLAG'      ' ',
+        ' ' 'ENTMFLAG'      ' '.
+
+  PERFORM call_transaction  USING 'MD75'.
+
+  READ TABLE gt_message INDEX 1.
+  IF gt_message-msgtyp = 'E'.
+    gt_list-g_icon = icon_led_red.
+    gt_list-message = gt_message-msgv1.
+  ELSE.
+    gt_list-g_icon = icon_led_green.
+  ENDIF.
+ENDFORM. " BDC_MD75_DATA2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_MD76_DATA2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_md76_data2 .
+  CLEAR : bdc_tab, gt_message.
+  REFRESH : bdc_tab, gt_message.
+
+  DATA :l_datum LIKE sy-datum.
+  CLEAR l_datum.
+
+  CASE 'X'.
+    WHEN p_rad3."YEAR
+      CONCATENATE p_year '1231' INTO l_datum.
+    WHEN p_rad4."MONTH
+<font color ="#0000FF">*      ### + 5</font>
+      CONCATENATE p_month '01' INTO l_datum.
+      CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+        EXPORTING
+          date      = l_datum
+          days      = 0
+          months    = 4
+          signum    = '+'
+          years     = 0
+        IMPORTING
+          calc_date = l_datum.
+<font color ="#0000FF">*### +5 ## ### ##</font>
+      CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+        EXPORTING
+          day_in            = l_datum
+        IMPORTING
+          last_day_of_month = l_datum
+        EXCEPTIONS
+          day_in_no_date    = 1
+          OTHERS            = 2.
+  ENDCASE.
+
+  PERFORM bdc_dynpro USING :
+        'X' 'RM60RR40'      '1000',
+        ' ' 'BDC_OKCODE'    '=ONLI',
+        ' ' 'WERKS-LOW'     s_werks-low,
+        ' ' 'WERKS-HIGH'    ' ',
+        ' ' 'MATNR-LOW'     ' ',
+        ' ' 'MATNR-HIGH'    ' ',
+        ' ' 'BEDAE-LOW'     ' ',
+        ' ' 'BEDAE-HIGH'    ' ',
+        ' ' 'PBDNR-LOW'     gt_list-pbdnr,
+        ' ' 'PBDNR-HIGH'    ' ',
+        ' ' 'VERSB-LOW'     gt_list-versb,
+        ' ' 'VERSB-HIGH'    gt_list-versb,
+        ' ' 'HDATE'         l_datum,
+        ' ' 'LISTFLAG'      'X',
+        ' ' 'TESTFLAG'      ' '.
+
+  PERFORM call_transaction  USING 'MD76'.
+
+  READ TABLE gt_message INDEX 1.
+  IF gt_message-msgtyp = 'E'.
+    gt_list-g_icon = icon_led_red.
+    gt_list-message = gt_message-msgv1.
+  ELSE.
+    gt_list-g_icon = icon_led_green.
+  ENDIF.
+ENDFORM. " BDC_MD76_DATA2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EVENT_TOP_OF_PAGE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_DYNDOC_ID  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM event_top_of_page USING p_e_dyndoc_id.
+  PERFORM alv_header.
+ENDFORM. " EVENT_TOP_OF_PAGE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BAPI_DATA2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bapi_data2 USING p_index.
+  DATA : ls_bapisitemr  LIKE bapisitemr.
+  DATA : lt_bapisshdin  LIKE bapisshdin OCCURS 0 WITH HEADER LINE.
+  DATA : lt_bapireturn1 LIKE bapireturn1 OCCURS 0 WITH HEADER LINE.
+
+  DATA : l_line(2) TYPE c.
+  DATA : l_tabname(30).
+  DATA : l_qyt LIKE bapisshdin-req_qty.
+
+
+  FIELD-SYMBOLS: &lt;fs&gt;.
+  READ TABLE gt_itab INDEX p_index.
+  CLEAR : lt_bapireturn1,  lt_bapireturn1[],
+          lt_bapisshdin,   lt_bapisshdin[],
+          ls_bapisitemr.
+
+
+
+  ls_bapisitemr-material   = gt_itab-matnr.
+  ls_bapisitemr-plant      = s_werks-low.
+  ls_bapisitemr-version    = gt_itab-versb.
+  ls_bapisitemr-req_number = p_pbdnr.
+  ls_bapisitemr-vers_activ = ' '.
+
+  CLEAR l_line.
+  IF p_rad1 = 'X'.
+    LOOP AT y_date.
+      l_line = l_line + 1.
+      CLEAR l_tabname.
+      CONCATENATE 'GT_ITAB-FILED' l_line INTO l_tabname.
+      ASSIGN (l_tabname) TO &lt;fs&gt;.
+      IF &lt;fs&gt; &lt;&gt; '' AND
+         &lt;fs&gt; &lt;&gt; 0.
+        CLEAR l_qyt.
+        l_qyt = &lt;fs&gt;.
+        lt_bapisshdin-date_type = '3'.
+        lt_bapisshdin-req_date  = y_date-day.
+        lt_bapisshdin-req_qty   = l_qyt.
+        APPEND lt_bapisshdin.
+      ENDIF.
+    ENDLOOP.
+  ELSEIF p_rad2 = 'X'.
+    LOOP AT m_day.
+      l_line = l_line + 1.
+      CLEAR l_tabname.
+      CONCATENATE 'GT_ITAB-FILED' l_line INTO l_tabname.
+      ASSIGN (l_tabname) TO &lt;fs&gt;.
+      IF &lt;fs&gt; &lt;&gt; '' AND
+         &lt;fs&gt; &lt;&gt; 0.
+        CLEAR l_qyt.
+        l_qyt = &lt;fs&gt;.
+        lt_bapisshdin-date_type = '2'.
+        lt_bapisshdin-req_date  = m_day-day.
+        lt_bapisshdin-req_qty   = l_qyt.
+        APPEND lt_bapisshdin.
+      ENDIF.
+    ENDLOOP.
+  ENDIF.
+
+  CALL FUNCTION 'BAPI_REQUIREMENTS_CREATE'
+    EXPORTING
+      requirements_item        = ls_bapisitemr
+<font color ="#0000FF">*     DO_COMMIT                = 'X'</font>
+<font color ="#0000FF">*     UPDATE_MODE              = 'X'</font>
+<font color ="#0000FF">*     REFER_TYPE               = ' '</font>
+<font color ="#0000FF">*     PROFILID                 = ' '</font>
+    TABLES
+      requirements_schedule_in = lt_bapisshdin
+      return                   = lt_bapireturn1.
+
+  IF lt_bapireturn1[] IS INITIAL.
+    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+      EXPORTING
+        wait = 'X'.
+    gs4 = gs4 + 1.
+    gt_itab-bdc_type = 'S'.
+    gt_itab-g_icon = icon_checked.
+<font color ="#0000FF">*      GT_ITAB-G_BOX  = ' '.</font>
+  ELSE.
+    READ TABLE lt_bapireturn1 INDEX 1.
+    IF lt_bapireturn1-type &lt;&gt; 'E'.
+      CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+        EXPORTING
+          wait = 'X'.
+      gs4 = gs4 + 1.
+      gt_itab-bdc_type = 'S'.
+      gt_itab-g_icon = icon_checked.
+<font color ="#0000FF">*        GT_ITAB-G_BOX  = ' '.</font>
+    ELSE.
+      CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
+      gs5 = gs5 + 1.
+      gt_itab-bdc_type = 'E'.
+      gt_itab-g_icon = icon_incomplete.
+    ENDIF.
+    gt_itab-g_type    = lt_bapireturn1-type.
+    gt_itab-g_message = lt_bapireturn1-message.
+  ENDIF.
+  MODIFY gt_itab INDEX p_index.
+  CLEAR  gt_itab.
+
+ENDFORM. " BAPI_DATA2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHECKING_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      &lt;--P_GS_PARM_ERROR  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM checking_data CHANGING pa_error.
+  DATA : l_str TYPE i.
+  DATA : l_pbdnr LIKE pbim-pbdnr.
+
+  l_str = strlen( p_pbdnr ).
+  CASE 'X'.
+    WHEN p_rad1.
+
+      IF p_year IS INITIAL .
+        MESSAGE s000 WITH 'INPUT THE YAER DATA'
+        DISPLAY LIKE 'E'.
+        pa_error ='X'.
+      ENDIF.
+
+      IF l_str &lt;&gt; 7.
+        MESSAGE s000 WITH 'REQUIREMENT PLAN KEY IS ERROR'
+        DISPLAY LIKE 'E'.
+        pa_error ='X'.
+      ENDIF.
+
+      CONCATENATE 'Y' p_year INTO l_pbdnr.
+
+      IF p_pbdnr(5) &lt;&gt; l_pbdnr.
+        MESSAGE s000 WITH 'REQUIREMENT PLAN KEY IS ERROR'
+        DISPLAY LIKE 'E'.
+        pa_error ='X'.
+      ENDIF.
+
+    WHEN p_rad2.
+
+      IF p_month IS INITIAL.
+        MESSAGE s000 WITH 'INPUT THE MONTH DATA'
+        DISPLAY LIKE 'E'.
+        pa_error ='X'.
+      ENDIF.
+
+      IF l_str &lt;&gt; 9.
+        MESSAGE s000 WITH 'REQUIREMENT PLAN KEY IS ERROR'
+        DISPLAY LIKE 'E'.
+        pa_error ='X'.
+      ENDIF.
+
+      CONCATENATE 'M' p_month INTO l_pbdnr.
+
+      IF p_pbdnr(7) &lt;&gt; l_pbdnr.
+        MESSAGE s000 WITH 'REQUIREMENT PLAN KEY IS ERROR'
+        DISPLAY LIKE 'E'.
+        pa_error ='X'.
+      ENDIF.
+  ENDCASE.
+
+  IF p_pbdnr IS INITIAL .
+    MESSAGE s000 WITH 'PLEASE INPUT THE REQUIREMENT PLAN KEY'
+       DISPLAY LIKE 'E'.
+    pa_error ='X'.
+    EXIT.
+  ENDIF.
+
+ENDFORM. " CHECKING_DATA
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

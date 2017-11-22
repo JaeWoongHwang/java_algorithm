@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170905</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170905</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Report Z20170905</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report Z20170905</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT z20170905.
+
+<font color ="#0000FF">*DATA : BEGIN OF gt_data OCCURS 0,</font>
+<font color ="#0000FF">*         carrid   LIKE sflight-carrid,</font>
+<font color ="#0000FF">*         connid   LIKE sflight-connid,</font>
+<font color ="#0000FF">*         currency LIKE sflight-currency,</font>
+<font color ="#0000FF">*         price    LIKE sflight-price,</font>
+<font color ="#0000FF">*         bookid   LIKE sbook-bookid,</font>
+<font color ="#0000FF">*         flag,</font>
+<font color ="#0000FF">*       END OF gt_data.</font>
+
+"OCCURS 0은 어떠한 제한도 갖지 않겠다는 의미
+" BEGIN OF 로 만든 HEADER있는  INTERNAL TABLE은 제약조건 없이 자유로이 사용
+
+<font color ="#0000FF">* DATA: gt_sflight TYPE TABLE OF sflight WITH HEADER LINE.</font>
+<font color ="#0000FF">* 헤더가 있는 인터널 테이블 선언</font>
+
+<font color ="#0000FF">*SELECT carrid connid currency price</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE gt_sflight</font>
+<font color ="#0000FF">*  FROM sflight.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*LOOP AT gt_sflight.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  WRITE : gt_sflight-carrid, /.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+
+<font color ="#0000FF">*DATA : BEGIN OF gt_data OCCURS 0.</font>
+<font color ="#0000FF">*    INCLUDE STRUCTURE sbook.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA : bukrs     LIKE t001-bukrs,</font>
+<font color ="#0000FF">*       werks     LIKE t001w-werks,</font>
+<font color ="#0000FF">*       matnr     LIKE mara-matnr,</font>
+<font color ="#0000FF">*       dmbtr     LIKE mseg-dmbtr,</font>
+<font color ="#0000FF">*       lgort     LIKE mseg-lgort,</font>
+<font color ="#0000FF">*       gubun(10),</font>
+<font color ="#0000FF">*       END OF gt_data.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*CLEAR : gt_data, gt_data[].</font>
+
+"gubun TYPE c LENGTH 10 = gubun(10)
+"Header를 가지고 있는 INTERNAL TABLE을 CLEAR해주고 싶을 때
+
+<font color ="#0000FF">*DATA : gt_sflight TYPE TABLE OF sflight WITH HEADER LINE.</font>
+<font color ="#0000FF">*DATA : gv_cnt TYPE i.</font>
+<font color ="#0000FF">*DATA : gv_cnt_aa  TYPE i,</font>
+<font color ="#0000FF">*       gv_cnt_az  TYPE i,</font>
+<font color ="#0000FF">*       gv_cnt_etc TYPE i.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*CLEAR : gt_sflight, gt_sflight[], gv_cnt_aa, gv_cnt_az, gv_cnt_etc.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT carrid connid planetype price fldate</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE gt_sflight</font>
+<font color ="#0000FF">*  FROM sflight.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*LOOP AT gt_sflight.</font>
+<font color ="#0000FF">*  CASE gt_sflight-carrid.</font>
+<font color ="#0000FF">*    WHEN 'AA'.</font>
+<font color ="#0000FF">*      gv_cnt_aa = gv_cnt_aa + 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    WHEN 'AZ'.</font>
+<font color ="#0000FF">*      gv_cnt_az = gv_cnt_az + 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    WHEN OTHERS.</font>
+<font color ="#0000FF">*      gv_cnt_etc = gv_cnt_etc + 1.</font>
+<font color ="#0000FF">*  ENDCASE.</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*WRITE : gv_cnt_aa, gv_cnt_az, gv_cnt_etc,/.</font>
+
+
+
+<font color ="#0000FF">*gv_cnt = lines( gt_sflight ).</font>
+"해당 INTERNAL TABLE의 Record의 갯수를 파악할 때 사용
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DO gv_cnt TIMES.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  READ TABLE gt_sflight INDEX sy-index.</font>
+<font color ="#0000FF">*  IF sy-subrc EQ 0.</font>
+<font color ="#0000FF">*    WRITE : gt_sflight-planetype,/.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*ENDDO.</font>
+
+"반복문 DO문, DO문 몇번을 반복하는지 정해줘야 함
+"sy-subrc는 작업의 성공여부를 리턴해 줌 0이면 성공,4면 실패
+"sy-index 는 DO문이 돌아갈때마다 1씩 증가 /DO문 외에서는 변하지 않음
+"sy-tabix는 Internal table이 access할 때 마다 1씩 증가
+
+
+<font color ="#0000FF">*DATA : gt_scarr TYPE TABLE OF scarr WITH HEADER LINE,</font>
+<font color ="#0000FF">*       gt_spfli TYPE TABLE OF spfli WITH HEADER LINE.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT carrid carrname currcode url</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE gt_scarr</font>
+<font color ="#0000FF">*  FROM scarr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT carrid connid countryfr cityfrom airpfrom countryto cityto</font>
+<font color ="#0000FF">*       airpto fltime deptime arrtime distance distid fltype period</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*INTO CORRESPONDING FIELDS OF TABLE gt_spfli</font>
+<font color ="#0000FF">*  FROM spfli.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SORT gt_scarr BY carrid.</font>
+<font color ="#0000FF">*SORT gt_spfli BY carrid.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*LOOP AT gt_scarr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  WRITE : gt_scarr-carrid,/, sy-uline.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  READ TABLE gt_spfli WITH KEY carrid = gt_scarr-carrid</font>
+<font color ="#0000FF">*  BINARY SEARCH.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LOOP AT gt_spfli FROM sy-tabix.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF gt_scarr-carrid NE gt_spfli-carrid.</font>
+<font color ="#0000FF">*      EXIT.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    WRITE : gt_spfli-carrid, gt_spfli-connid, gt_spfli-countryfr,/.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**    CASE gt_scarr-carrid.</font>
+<font color ="#0000FF">**      WHEN gt_spfli-carrid.</font>
+<font color ="#0000FF">**        WRITE : gt_spfli-carrid, gt_spfli-connid, gt_spfli-countryfr,/.</font>
+<font color ="#0000FF">**    ENDCASE.</font>
+<font color ="#0000FF">*" 위의 IF문이 있으면 CASE문은 필요가 없음</font>
+<font color ="#0000FF">*" IF문에서 조건이 같지 않으면 EXIT을 했으므로 조건이 같다면 알아서 LOOP를 실행</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+
+<font color ="#0000FF">*DATA : gt_mkpf TYPE TABLE OF mkpf WITH HEADER LINE,</font>
+<font color ="#0000FF">*       gt_mseg TYPE  TABLE OF mseg WITH HEADER LINE.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT mblnr vgart blart</font>
+<font color ="#0000FF">*INTO CORRESPONDING FIELDS OF TABLE gt_mkpf</font>
+<font color ="#0000FF">*FROM mkpf</font>
+<font color ="#0000FF">*WHERE mjahr = '2016'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT mblnr zeile bwart matnr werks</font>
+<font color ="#0000FF">*INTO CORRESPONDING FIELDS OF TABLE gt_mseg</font>
+<font color ="#0000FF">*FROM mseg</font>
+<font color ="#0000FF">*WHERE mjahr = '2016'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*CLEAR : gt_mkpf, gt_mseg.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SORT gt_mkpf BY mjahr.</font>
+<font color ="#0000FF">*SORT gt_mseg BY mjahr.</font>
+<font color ="#0000FF">*정렬을 해야 이진탐색이 가능 또한 효율적인 검색이 가능</font>
+<font color ="#0000FF">*LOOP AT gt_mkpf.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  READ TABLE gt_mseg WITH KEY mjahr = gt_mkpf-mjahr</font>
+<font color ="#0000FF">*  BINARY SEARCH.</font>
+<font color ="#0000FF">* sy-tabix를 통해 효율적으로 시작시점을 가져가기 위해 READ TABLE을 실행</font>
+<font color ="#0000FF">*  IF sy-subrc EQ 0.</font>
+<font color ="#0000FF">*READ TABLE이 성공했을시에만 하위LOOP를 실행</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    LOOP AT gt_mseg FROM sy-tabix.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      IF gt_mseg-mjahr &lt;&gt;  gt_mkpf-mjahr.</font>
+<font color ="#0000FF">*        EXIT.</font>
+<font color ="#0000FF">*      ENDIF.</font>
+<font color ="#0000FF">*LOOP의 출구를 IF조건으로 지정</font>
+<font color ="#0000FF">*      WRITE : gt_mseg-mblnr,</font>
+<font color ="#0000FF">*              gt_mseg-zeile,</font>
+<font color ="#0000FF">*              gt_mseg-bwart,</font>
+<font color ="#0000FF">*              gt_mseg-matnr ,/.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+
+"SELECTION-SCREEN 만드는 코드
+<font color ="#0000FF">*TABLES : T001.</font>
+
+<font color ="#0000FF">*SELECTION-SCREEN BEGIN OF BLOCK bl1 WITH FRAME TITLE text-001.</font>
+<font color ="#0000FF">*  "블럭에 이름을 줌</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT-OPTIONS : s_bukrs FOR t001-bukrs NO INTERVALS.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECTION-SCREEN END OF BLOCK bl1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECTION-SCREEN BEGIN OF BLOCK bl2 WITH FRAME TITLE text-002 .</font>
+<font color ="#0000FF">*  "블럭을 보이도록 FRAME을 설정</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT-OPTIONS : s_ktopl FOR t001-ktopl NO-EXTENSION.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECTION-SCREEN END OF BLOCK bl2.</font>
+
+
+
+TABLES : sflight.
+
+SELECTION-SCREEN BEGIN OF BLOCK bl3 WITH FRAME TITLE TEXT-t01.
+"블럭에 이름을 줌
+
+SELECT-OPTIONS : s_carrid FOR sflight-carrid OBLIGATORY,
+                 s_connid FOR sflight-connid NO INTERVALS,
+                 s_fldate FOR sflight-fldate NO-EXTENSION,
+                 s_cur FOR sflight-currency NO INTERVALS NO-EXTENSION.
+
+<font color ="#0000FF">*SELECT-OPTIONS : s_carrid FOR sflight-carrid OBLIGATORY DEFAULT 'AA',</font>
+<font color ="#0000FF">*                 s_connid FOR sflight-connid NO INTERVALS MEMORY ID con,</font>
+<font color ="#0000FF">*                 s_fldate FOR sflight-fldate NO-EXTENSION MODIF ID con,</font>
+<font color ="#0000FF">*                 s_cur FOR sflight-currency NO INTERVALS NO-EXTENSION.</font>
+
+SELECTION-SCREEN END OF BLOCK bl3.
+
+DATA : gt_sflight TYPE TABLE OF sflight WITH HEADER LINE.
+
+CLEAR : gt_sflight, gt_sflight[].
+
+SELECT carrid connid fldate planetype currency price
+  INTO CORRESPONDING FIELDS OF TABLE gt_sflight
+  FROM sflight
+  WHERE carrid IN s_carrid.
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* 001 검색조건</font>
+<font color ="#0000FF">* 002 옵션</font>
+<font color ="#0000FF">* T01 검색조건</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* S_BUKRS D       .</font>
+<font color ="#0000FF">* S_CARRID D       .</font>
+<font color ="#0000FF">* S_CONNID D       .</font>
+<font color ="#0000FF">* S_CUR D       .</font>
+<font color ="#0000FF">* S_FLDATE D       .</font>
+<font color ="#0000FF">* S_KTOPL D       .</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

@@ -1,0 +1,2844 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZPPG0030_24</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZPPG0030_24</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Routing 대량생성</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report  ZPPG0030_24</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZPPG0030_23</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zppg0030_24 MESSAGE-ID zppgm.
+
+include <a href ="zcag0000_alv.html">zcag0000_alv</a>. " Common ALV
+include <a href ="zcag0000_f01.html">zcag0000_f01</a>. " Common Function
+include <a href ="zppg0000_f01.html">zppg0000_f01</a>.
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* Table</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+TABLES:mara, marc, makt, mkal, mapl, plko, plpo, crhd.
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* Type</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+TYPES : BEGIN OF gy_search,
+          werks TYPE werks_d,
+          matnr TYPE matnr,
+          arbpl TYPE arbpl,
+
+        END OF gy_search.
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* Constants</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* --&gt; begin of 2014.09.28 EDU08 - 不需要#位常量“MIN” --</font>
+CONSTANTS: c_vge00 LIKE plpo-vge01 VALUE ''.
+<font color ="#0000FF">* &lt;-- end of 2014.09.28 EDU08 --</font>
+<font color ="#0000FF">*CONSTANTS: C_LAR01 LIKE PLPO-LAR01 VALUE 'ACT01'.</font>
+<font color ="#0000FF">*CONSTANTS: C_LAR02 LIKE PLPO-LAR01 VALUE 'ACT02'.</font>
+<font color ="#0000FF">*CONSTANTS: C_LAR03 LIKE PLPO-LAR01 VALUE 'ACT03'.</font>
+<font color ="#0000FF">*CONSTANTS: C_LAR04 LIKE PLPO-LAR01 VALUE 'ACT04'.</font>
+<font color ="#0000FF">*CONSTANTS: C_LAR05 LIKE PLPO-LAR01 VALUE 'ACT05'.</font>
+<font color ="#0000FF">*CONSTANTS: C_LAR06 LIKE PLPO-LAR01 VALUE 'ACT08'.</font>
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* 광역변수</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+DATA: gv_okcd LIKE sy-ucomm,
+      gv_ucom LIKE sy-ucomm.
+DATA: gv_matnr      TYPE matnr,
+      gv_index_now  TYPE i,
+      gv_index_last TYPE i,
+      gv_body_flag  TYPE n,  "수정시 비디시에서 사용
+      gv_error(8)   TYPE n, " 실패건수
+      gv_ok(8)      TYPE n, " 성공건수
+      gv_count(8)   TYPE n.   "인터너테이블 데이터건수
+DATA: gv_bapi_done.      "바피 성공
+DATA: gv_allo_counter(4) TYPE n. "자재지정개수
+DATA: gv_message TYPE char258.
+DATA: gv_losvn(13),"BDC돌릴시 최소로트크기
+      gv_losbs(13)."BDC돌릴시 최대로트크기
+DATA: gv_excel_success      LIKE sy-tabix,
+      gv_excel_fail         TYPE sy-tabix,
+      gv_excel_total        TYPE sy-tabix,
+      gv_processing_success TYPE sy-tabix,
+      gv_processing_fail    TYPE sy-tabix,
+      gv_processing_total   TYPE sy-tabix.
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* IT & STRUCTURE</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+DATA : BEGIN OF gt_routing_excel OCCURS 0,
+         xlsid     TYPE i, " Excel的序# Added by EDU08 PP##：金文哲 on 2014-08-27 --
+         matnr(18),  "Material
+         werks(4),   "Plant
+         sttag(8),   "Key date
+         plnnr(8),   "Group
+         plnal(2),   "Group Counter
+         ktext(40),  "Task list description
+         verwe(4),   "Usage
+         statu(10),  "Status
+         losvn(16),  "From Lot Size
+         losbs(16),  "To Lot Size
+         vornr(4),   "Operation/Activity Number
+         arbpl(8),   "Work Center
+         steus(4),   "Control key
+         ktsch(7),   "Standard text key
+         ltxa1(40),  "Operation Description
+         bmsch(13),  "Base Quantity
+         vgw01(9),   "standard value 1
+         vgw02(9),   "standard value
+         vgw03(9),   "standard value
+         vgw04(9),   "standard value 1
+         vgw05(9),   "standard value
+         vgw06(9),   "standard value
+
+       END OF gt_routing_excel.
+
+DATA: BEGIN OF gt_data OCCURS 0.
+    INCLUDE STRUCTURE gt_routing_excel.
+DATA:
+  maktx(40),  "Material description
+  mtart(4),   "Material type
+  gmein(3),   "UNIT
+  vge01(3),   "Unit
+  lar01(6),   "액티비티유형
+  vge02(3),   "Unit
+  lar02(6),   "Activity Type
+  vge03(3),   "Unit
+  lar03(6),   "Activity Type
+  vge04(3),   "Unit
+  lar04(6),   "Activity Type
+  vge05(3),   "Unit
+  lar05(6),   "Activity Type
+  vge06(3),   "Unit
+  lar06(6),   "Activity Type
+  check(4)  TYPE c,
+  icon(4),"Yellow : Excel Success  Green : Processing Success
+  celltab   TYPE lvc_t_styl,
+  index     TYPE i,  " Alv行#索引 Added by EDU08 PP##：金文哲 on 2014-08-22 --
+  msg(225).
+DATA: END OF gt_data.
+
+<font color ="#0000FF">*---------&gt;  ROUTING BAPI 를 위한 선언.</font>
+DATA :
+  gv_group                  TYPE  bapi1012_tsk_c-task_list_group,
+  gv_groupcounter           TYPE  bapi1012_tsk_c-group_counter,
+  gt_task                   LIKE bapi1012_tsk_c OCCURS 0 WITH HEADER LINE,
+  gt_materialtaskallocation LIKE bapi1012_mtk_c OCCURS 0 WITH HEADER LINE,
+  gt_operation              LIKE bapi1012_opr_c OCCURS 0 WITH HEADER LINE,
+  gt_componentallocation    LIKE bapi1012_com_c OCCURS 0 WITH HEADER LINE,
+  gt_return                 LIKE bapiret2 OCCURS 0 WITH HEADER LINE,
+  gt_return_ext             LIKE bapiret2 OCCURS 0 WITH HEADER LINE,
+  gv_task_list_group        LIKE bapi1012_mtk_c-task_list_group.
+
+<font color ="#0000FF">* 라우팅 삭제 할때  쓸 BDC 데이타</font>
+"BDC
+DATA :gt_bdcdata LIKE bdcdata    OCCURS 0 WITH HEADER LINE,
+      gt_messtab LIKE bdcmsgcoll OCCURS 0 WITH HEADER LINE,
+      gv_mseg    LIKE sy-msgv1,
+      gv_line    TYPE i,
+      gv_opt     LIKE ctu_params.
+
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* SELECTION-SCREEN</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-s01.
+PARAMETERS : p_fname TYPE rlgrap-filename
+             OBLIGATORY DEFAULT 'C:\'.
+SELECTION-SCREEN END OF BLOCK b1.
+
+SELECTION-SCREEN FUNCTION KEY 1.
+
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* INITIALIZATION</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+INITIALIZATION.
+  PERFORM initialization.
+
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_fname.
+  PERFORM find_folder USING p_fname.
+
+AT SELECTION-SCREEN.
+  PERFORM at_sel_scr.
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+START-OF-SELECTION.
+  PERFORM process_data USING space.
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* END-OF-SELECTION</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+END-OF-SELECTION.
+  CALL SCREEN 0100.
+
+
+<font color ="#0000FF">************************************************************************</font>
+<font color ="#0000FF">*&      Module  PBO  OUTPUT</font>
+<font color ="#0000FF">************************************************************************</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  STATUS_0100  OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+MODULE status_0100 OUTPUT.
+  DATA : lt_ex_ucomm      TYPE TABLE OF sy-ucomm WITH HEADER LINE.
+  CLEAR: lt_ex_ucomm, lt_ex_ucomm[].
+
+  APPEND 'DELETE' TO lt_ex_ucomm.
+  SET PF-STATUS '0100' EXCLUDING lt_ex_ucomm[].
+
+  DATA: l_title TYPE sy-title.
+  l_title = sy-title.
+  SET TITLEBAR  '0100' WITH l_title.  "&
+
+ENDMODULE.                 " STATUS_0100  OUTPUT
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  PBO_0100  OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE pbo_0100 OUTPUT.
+
+<font color ="#0000FF">*  IF GS_DCON1 IS INITIAL.</font>
+<font color ="#0000FF">*    CREATE OBJECT GS_DCON1</font>
+<font color ="#0000FF">*      EXPORTING</font>
+<font color ="#0000FF">*        STYLE     = CL_GUI_CONTROL=&gt;WS_CHILD</font>
+<font color ="#0000FF">*        REPID     = SY-CPROG</font>
+<font color ="#0000FF">*        DYNNR     = SY-DYNNR</font>
+<font color ="#0000FF">*        SIDE      = GS_DCON1-&gt;DOCK_AT_LEFT</font>
+<font color ="#0000FF">*        LIFETIME  = CL_GUI_CONTROL=&gt;LIFETIME_IMODE</font>
+<font color ="#0000FF">*        EXTENSION = 3000</font>
+<font color ="#0000FF">*      EXCEPTIONS</font>
+<font color ="#0000FF">*        OTHERS    = 1.</font>
+<font color ="#0000FF">**    PERFORM ALV_GLOBAL_SPLITTER_OBJECT USING GS_DCON1 GS_GCON1</font>
+<font color ="#0000FF">*GS_GCON2</font>
+<font color ="#0000FF">**    15.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+
+
+<font color ="#0000FF">* ALV Title 설정</font>
+<font color ="#0000FF">*  PERFORM SET_ALV_TITLE TABLES GT_DOCUMENT.</font>
+<font color ="#0000FF">*  PERFORM ALV_GLOBAL_CREATE_DOCUMENT TABLES GT_DOCUMENT</font>
+<font color ="#0000FF">*                                  USING GO_CL_DD_DOCUMENT GS_GCON1.</font>
+<font color ="#0000FF">*  PERFORM ALV_CREATE_OBJECT_GCON</font>
+<font color ="#0000FF">*     TABLES GT_DATA</font>
+<font color ="#0000FF">*     USING  GRID1</font>
+<font color ="#0000FF">*            GS_GCON2</font>
+<font color ="#0000FF">*            'CON1'</font>
+<font color ="#0000FF">*            'GT_DATA'</font>
+<font color ="#0000FF">*            ''.</font>
+
+  PERFORM alv_create_object_acon
+      TABLES gt_data
+      USING  grid1
+             gs_ccon1
+             'GO_CONT'
+             'GT_DATA'
+             ''.
+
+
+ENDMODULE.                 " PBO_0100  OUTPUT
+
+
+
+<font color ="#0000FF">************************************************************************</font>
+<font color ="#0000FF">*&      Module  PAI  INPUT</font>
+<font color ="#0000FF">************************************************************************</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT_0100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+MODULE exit_0100 INPUT.
+
+  CLEAR gv_okcd.
+  gv_okcd = gv_ucom.
+  CLEAR gv_ucom.
+
+  CASE gv_okcd.
+
+    WHEN  'EXIT' OR 'CANC' OR 'BACK'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.                 " EXIT_0100  INPUT
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  USER_COMMAND_0100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+MODULE user_command_0100 INPUT.
+  CLEAR gv_okcd.
+  gv_okcd = gv_ucom.
+  CLEAR gv_ucom.
+
+  CASE gv_okcd.
+    WHEN 'DELETE'.
+      READ TABLE gt_data WITH KEY check = 'X'.
+      IF sy-subrc &lt;&gt; 0.
+        MESSAGE s307 DISPLAY LIKE 'E'.
+      ELSE.
+        PERFORM delete_routing.
+        PERFORM data_count.
+      ENDIF.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SELECT'.
+      gt_data-check = 'X'.
+      MODIFY gt_data TRANSPORTING check WHERE check = ''
+      AND msg IS INITIAL.
+
+    WHEN 'DESELECT'.
+      CLEAR gt_data-check .
+      MODIFY gt_data TRANSPORTING check WHERE check = 'X'.
+    WHEN 'CREATE'.
+      READ TABLE gt_data WITH KEY check = 'X'.
+      IF sy-subrc &lt;&gt; 0.
+        MESSAGE s307 DISPLAY LIKE 'E'.
+      ELSE.
+<font color ="#0000FF">*        PERFORM CREATE_ROUTING.</font>
+
+<font color ="#0000FF">* --&gt; begin of 2014.08.21 EDU08 - Operation/Activity Number = '0010'--</font>
+        PERFORM create_routing2.
+<font color ="#0000FF">* &lt;-- end of 2014.08.21 EDU08 --</font>
+
+        PERFORM data_count.
+      ENDIF.
+    WHEN 'CHANGE'.
+      READ TABLE gt_data WITH KEY check = 'X'.
+      IF sy-subrc &lt;&gt; 0.
+        MESSAGE s307 DISPLAY LIKE 'E'.
+      ELSE.
+        PERFORM change_routing.
+        PERFORM data_count.
+      ENDIF.
+
+  ENDCASE.
+ENDMODULE.                 " USER_COMMAND_0100  INPUT
+
+
+
+
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+<font color ="#0000FF">* FORM  APPEND_HEADER</font>
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+<font color ="#0000FF">* TEXT : ALV Field Category using Internal Table</font>
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+FORM alv_append_header USING pv_itab_name
+                               pv_structure_name.
+
+  CLEAR : gt_fieldcat_h[], gt_fieldcat_h.
+  CLEAR : fieldcat, gv_col_pos.
+  REFRESH fieldcat.
+  CLEAR gv_col_pos.
+
+  "Internal Table에 대한 Field Catalog를 참조한다.
+  PERFORM alv_fieldcatalog_call USING pv_itab_name
+                                      pv_structure_name.
+
+  CASE pv_itab_name .
+    WHEN 'GT_DATA'. PERFORM set_fieldcat_data .
+  ENDCASE.
+
+
+ENDFORM. "APPEND_HEADER
+
+
+
+
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+<font color ="#0000FF">* FORM  ALV_INIT</font>
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+<font color ="#0000FF">* TEXT : ALV Grid의 초기값을 설정한다.</font>
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+FORM alv_grid_init USING po_grid TYPE REF TO cl_gui_alv_grid
+                          pv_cons_name TYPE char10.
+
+  "Layout Setting
+<font color ="#0000FF">*   gs_layout-cwidth_opt = 'X'.    "Column Width 최적화 사용여부</font>
+  gs_layout-no_rowmark = ' '.
+  gs_layout-sel_mode   = 'D'.    "Row 선택유형
+<font color ="#0000FF">*   GS_LAYOUT-ZEBRA      = 'X'.</font>
+
+
+  gs_layout-no_totline = space.
+  gs_layout-numc_total = 'X'.
+  gs_layout-stylefname = 'CELLTAB'.
+
+
+
+  "Layout Variant 속성 설정
+  CONCATENATE sy-repid sy-dynnr INTO gv_variant-report.
+  gv_save = 'U'.
+
+
+  "Tollbar에서 제거할 버튼지정
+  PERFORM alv_exclude_tb_functions USING po_grid.
+
+  PERFORM alv_register_f4_fields USING po_grid.
+
+  CALL METHOD po_grid-&gt;register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=&gt;mc_evt_modified.
+
+
+<font color ="#0000FF">* Event Define</font>
+  CREATE OBJECT gs_event_receiver.
+  SET HANDLER gs_event_receiver-&gt;handle_double_click  FOR po_grid.
+<font color ="#0000FF">*   SET HANDLER GS_EVENT_RECEIVER-&gt;HANDLE_DATA_CHANGED  FOR PO_GRID.</font>
+<font color ="#0000FF">*   SET HANDLER GS_EVENT_RECEIVER-&gt;HANDLE_HOTSPOT_CLICK FOR PO_GRID.</font>
+<font color ="#0000FF">*   SET HANDLER GS_EVENT_RECEIVER-&gt;HANDLE_ONF4          FOR PO_GRID.</font>
+
+
+ENDFORM. "alv_init
+
+
+
+
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+<font color ="#0000FF">* FORM  EXCLUDE_TB_FUNCTIONS</font>
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+<font color ="#0000FF">* TEXT : ALV Toolbar에서 제외할 Button 설정</font>
+<font color ="#0000FF">*---------------------------------------------------------------------*</font>
+FORM alv_exclude_tb_functions USING po_grid TYPE REF TO cl_gui_alv_grid.
+
+  CLEAR : gt_exclude, gt_exclude[].
+
+  "CL_GUI_ALV_GRID Class의 Static Attribute를 이용하여 Button을 제거한다.
+  "Button을 모두 제거하려면 CL_GUI_ALV_GRID=&gt;MC_FC_EXCL_ALL를 지정한다.
+
+  PERFORM append_exclude_functions
+         TABLES gt_exclude[]
+          USING : cl_gui_alv_grid=&gt;mc_fc_loc_undo, " 실행취소 &LOCAL&UNDO
+                  cl_gui_alv_grid=&gt;mc_fc_loc_copy,          " 행 카피.
+                  cl_gui_alv_grid=&gt;mc_fc_refresh,
+                  cl_gui_alv_grid=&gt;mc_fc_loc_copy_row,      " 행 카피.
+                  cl_gui_alv_grid=&gt;mc_fc_loc_cut,           " 가위.
+                  cl_gui_alv_grid=&gt;mc_fc_loc_delete_row,    " 행삭제.
+                  cl_gui_alv_grid=&gt;mc_fc_loc_insert_row,    " 행삽입.
+                  cl_gui_alv_grid=&gt;mc_fc_loc_append_row,    " 라인생성.
+                  cl_gui_alv_grid=&gt;mc_fc_loc_move_row,
+                  cl_gui_alv_grid=&gt;mc_fc_loc_paste,         " 겹쳐쓰기.
+                  cl_gui_alv_grid=&gt;mc_fc_loc_paste_new_row. " 겹쳐쓰기.
+
+ENDFORM. " EXCLUDE_TB_FUNCTIONS
+
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  FORM  CREATE_OBJECT</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  TEXT : Container와 ALV Object를 생선한다.</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_create_object_acon
+      TABLES pt_output
+      USING po_grid TYPE REF TO cl_gui_alv_grid
+            po_cons TYPE REF TO cl_gui_custom_container
+            pv_cons_name TYPE char10
+            pv_it_name
+            pv_structure_name.
+
+  "Screen PBO Module에 의해서 실행된다.
+  IF po_grid IS INITIAL.   "Object가 아직 생성되지 않은 경우
+    "Container Object 생성
+<font color ="#0000FF">*    Create Customer container</font>
+    PERFORM create_cust_container USING po_cons pv_cons_name.
+
+    "Create ALV grid container
+    PERFORM create_grid_container USING po_cons po_grid
+abap_true. " abap_true
+
+
+
+    PERFORM alv_append_header USING pv_it_name
+                                     pv_structure_name.
+
+    PERFORM alv_append_sort  USING pv_it_name
+                                     pv_structure_name.
+
+    PERFORM alv_cell_style TABLES pt_output.
+
+    PERFORM alv_grid_init USING po_grid
+                                 pv_cons_name.
+
+
+
+    "ALV Grid를 출력한다.
+    CALL METHOD po_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_layout            = gs_layout
+        is_variant           = gv_variant
+        it_toolbar_excluding = gt_exclude
+        i_save               = gv_save
+        i_default            = 'X'
+      CHANGING
+        it_fieldcatalog      = fieldcat[]
+        it_outtab            = pt_output[]
+        it_sort              = gt_sort[]
+        it_filter            = gt_filter[].
+
+
+  ELSE.       "Object가 이미 생성된 경우
+    PERFORM alv_table_refresh USING po_grid 'X' space.
+  ENDIF.
+
+ENDFORM. "CREATE_OBJECT
+
+
+
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* FORM  REGISTER_F4_FIELDS</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* TEXT : Search Help를 출력할 Field Name을 설정한다.</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_register_f4_fields USING po_grid TYPE REF TO cl_gui_alv_grid.
+  DATA: lt_f4_data TYPE lvc_s_f4,
+        lt_f4      TYPE lvc_t_f4.
+
+<font color ="#0000FF">*   LT_F4_DATA-FIELDNAME   = 'KSTAR'.</font>
+<font color ="#0000FF">*   LT_F4_DATA-REGISTER    = 'X'.</font>
+<font color ="#0000FF">*   LT_F4_DATA-CHNGEAFTER  = 'X'.</font>
+<font color ="#0000FF">*   INSERT LT_F4_DATA INTO TABLE LT_F4.</font>
+
+  CALL METHOD po_grid-&gt;register_f4_for_fields
+    EXPORTING
+      it_f4 = lt_f4[].
+
+ENDFORM. " P3040_REGISTER_F4_FIELDS
+
+
+
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* FORM  P1220_FIELD_SET</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* TEXT : 탐색 도움말 Field Setting</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_f4_field_set USING p_table
+                                          p_field
+                                          p_flag.
+  gt_fields-tabname    = p_table.
+  gt_fields-fieldname  = p_field.
+  gt_fields-selectflag = p_flag.
+  APPEND gt_fields. CLEAR gt_fields.
+
+ENDFORM. " P1220_FIELD_SET
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  ALV_SET_FILTER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text : 필터 정의</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_set_filter .
+  CLEAR : gt_filter[].
+ENDFORM. " ALV_SET_FILTER
+
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FIELDCAT_BRAND_0100</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text : 브랜드 관련 FIELDCAT</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fieldcat_data.
+  PERFORM alv_field_setting_call USING :
+'S'   'CHECK'      space    , "Box
+' '   'SELTEXT_L'  TEXT-c01  ,
+' '   'CHECKBOX'   'X',
+'E'   'EDIT'       'X',
+
+'S'   'ICON'      space    , "Light
+' '   'SELTEXT_L'  TEXT-c02  ,
+' '   'JUST'       'C',
+'E'   'ICON'        ' ',
+
+'S'   'WERKS'      space    , "Plant
+' '   'SELTEXT_L'  TEXT-c03  ,
+'E'   'KEY'        ' ',
+
+'S'   'MATNR'      space    , "Material
+' '   'SELTEXT_L'  TEXT-c04  ,
+' '   'REF_TABLE'  'MARA'  ,
+' '   'REF_FIELD'  'MATNR'  ,
+'E'   'KEY'        ' ',
+
+'S'   'MAKTX'      space    , "Material Description
+' '   'SELTEXT_L'  TEXT-c05  ,
+' '   'REF_TABLE'  'MAKT'  ,
+' '   'REF_FIELD'  'MAKTX'  ,
+'E'   'KEY'        ' ',
+
+'S'   'MTART'      space    , "Material Type
+' '   'SELTEXT_L'  TEXT-c06  ,
+' '   'REF_TABLE'  'MARA'  ,
+' '   'REF_FIELD'  'MTART'  ,
+'E'   'KEY'        ' ',
+
+'S'   'STTAG'      space    , "Key Date
+' '   'SELTEXT_L'  TEXT-c07  ,
+'E'   'KEY'        ' ',
+
+'S'   'PLNNR'      space    , "Group
+' '   'SELTEXT_L'  TEXT-c08  ,
+' '   'REF_TABLE'  'MAPL'  ,
+' '   'REF_FIELD'  'PLNNR'  ,
+'E'   'KEY'        ' ',
+
+'S'   'PLNAL'      space    , "Group Counter
+' '   'SELTEXT_L'  TEXT-c09  ,
+' '   'REF_TABLE'  'MAPL'  ,
+' '   'REF_FIELD'  'PLNAL'  ,
+'E'   'KEY'        ' ',
+
+'S'   'KTEXT'      space    , "Task list Description
+' '   'SELTEXT_L'  TEXT-c10  ,
+' '   'REF_TABLE'  'PLKO'  ,
+' '   'REF_FIELD'  'KTEXT'  ,
+'E'   'KEY'        ' ',
+
+'S'   'VERWE'      space    , "Usage
+' '   'SELTEXT_L'  TEXT-c11  ,
+' '   'REF_TABLE'  'PLKO'  ,
+' '   'REF_FIELD'  'VERWE'  ,
+'E'   'KEY'        ' ',
+
+'S'   'STATU'      space    , "Status
+' '   'SELTEXT_L'  TEXT-c12  ,
+' '   'REF_TABLE'  'PLKO'  ,
+' '   'REF_FIELD'  'STATU'  ,
+'E'   'KEY'        ' ',
+
+'S'   'LOSVN'      space    , "From Lot Size
+' '   'SELTEXT_L'  TEXT-c13  ,
+' '   'REF_TABLE'  'PLKO'  ,
+' '   'REF_FIELD'  'STATU'  ,
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'LOSBS'      space    , "To Lot Size
+' '   'SELTEXT_L'  TEXT-c14  ,
+' '   'REF_TABLE'  'PLKO'  ,
+' '   'REF_FIELD'  'LOSBS'  ,
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VORNR'      space    , "Operation/Activity No.
+' '   'SELTEXT_L'  TEXT-c15  ,
+' '   'REF_TABLE'  'PLPO'  ,
+' '   'REF_FIELD'  'VORNR'  ,
+'E'   'KEY'        ' ',
+
+'S'   'ARBPL'      space    , "Work Center
+' '   'SELTEXT_L'  TEXT-c16  ,
+' '   'REF_TABLE'  'CHRD'  ,
+' '   'REF_FIELD'  'ARBPL'  ,
+'E'   'KEY'        ' ',
+
+'S'   'STEUS'      space    , "Control key
+' '   'SELTEXT_L'  TEXT-c17  ,
+' '   'REF_TABLE'  'PLPO'  ,
+' '   'REF_FIELD'  'STEUS'  ,
+'E'   'KEY'        ' ',
+
+'S'   'KTSCH'      space    , "Standard text key
+' '   'SELTEXT_L'  TEXT-c18  ,
+' '   'REF_TABLE'  'PLPO'  ,
+' '   'REF_FIELD'  'KTSCH'  ,
+'E'   'KEY'        ' ',
+
+'S'   'LTXA1'      space    , "Operation Description
+' '   'SELTEXT_L'  TEXT-c19  ,
+' '   'REF_TABLE'  'PLPO'  ,
+' '   'REF_FIELD'  'LTXA1'  ,
+'E'   'KEY'        ' ',
+
+'S'   'BMSCH'      space    , "Base Quantity
+' '   'SELTEXT_L'  TEXT-c20  ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'MEINH'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VGW01'      space    , "Labor Hour-Dir. Labor
+' '   'SELTEXT_L'  TEXT-c21  ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'VGE01'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VGW02'      space    , "Labor Hour-Other Per
+' '   'SELTEXT_L'  TEXT-c22  ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'VGE02'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VGW03'      space    , "Machine Hour-Machine
+' '   'SELTEXT_L'  TEXT-c23  ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'VGE03'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VGW04'      space    , "Machine Hour-Depreciate
+' '   'SELTEXT_L'  TEXT-c25  ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'VGE04'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VGW05'      space    , "Mach. Hour-Dep(mold)
+' '   'SELTEXT_L'  TEXT-c26 ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'VGE05'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+
+'S'   'VGW06'      space    , "Machine Hour-Overhead
+' '   'SELTEXT_L'  TEXT-c29  ,
+<font color ="#0000FF">*' '   'REF_TABLE'  'PLPO'  ,</font>
+<font color ="#0000FF">*' '   'REF_FIELD'  'VGE06'  ,</font>
+' '   'JUST'       'R',
+'E'   'KEY'        ' ',
+<font color ="#0000FF">*</font>
+'S'   'MSG'      space    , "Error Message
+' '   'SELTEXT_L'  TEXT-c27  ,
+'E'   'KEY'        ' ',
+
+'S'   'GMEIN'      space    , "Unit
+' '   'SELTEXT_L'  TEXT-c28  ,
+' '   'NO_OUT'     'X',
+'E'   'KEY'        ' '.
+
+<font color ="#0000FF">*</font>
+ENDFORM. "
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_SORT_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PV_IT_NAME  text</font>
+<font color ="#0000FF">*      --&gt;P_PV_STRUCTURE_NAME  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_sort_data.
+<font color ="#0000FF">*  PERFORM ALV_SORT_SETTING USING :</font>
+<font color ="#0000FF">*                 'S' 'FIELDNAME' 'BUKRS',</font>
+<font color ="#0000FF">*                 ' ' 'UP'        'X',</font>
+<font color ="#0000FF">*                 'E' 'SPOS'      '1'.</font>
+
+
+
+ENDFORM. " SET_SORT_DATA
+
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* FORM  FIELD_SET</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* TEXT : 탐색 도움말 Field Setting</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+
+FORM field_set TABLES pt_fields STRUCTURE help_value
+                 USING p_table  p_field p_flag.
+  pt_fields-tabname    = p_table.
+  pt_fields-fieldname  = p_field.
+  pt_fields-selectflag = p_flag.
+  APPEND pt_fields. CLEAR pt_fields.
+ENDFORM. " P2050_FIELD_SET
+
+
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  alv_append_sort</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PV_ITAB_NAME       text</font>
+<font color ="#0000FF">*      --&gt;PV_STRUCTURE_NAME  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_append_sort USING pv_itab_name
+                                pv_structure_name.
+  CLEAR : gt_sort[], gt_sort.
+
+  CASE pv_itab_name .
+    WHEN 'GT_DATA'. PERFORM set_sort_data.
+  ENDCASE.
+ENDFORM. " ALV_APPEND_SORT
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  ALV_CREATE_OBJECT_GCON</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_GT_DATA  text</font>
+<font color ="#0000FF">*      --&gt;P_GRID1  text</font>
+<font color ="#0000FF">*      --&gt;P_GS_GCON2  text</font>
+<font color ="#0000FF">*      --&gt;P_0065   text</font>
+<font color ="#0000FF">*      --&gt;P_0066   text</font>
+<font color ="#0000FF">*      --&gt;P_0067   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_create_object_gcon
+       TABLES pt_output
+       USING po_grid TYPE REF TO cl_gui_alv_grid
+             po_cons TYPE REF TO cl_gui_container
+             pv_cons_name TYPE char10
+             pv_it_name
+             pv_structure_name.
+
+  "Screen PBO Module에 의해서 실행된다.
+  IF po_grid IS INITIAL.   "Object가 아직 생성되지 않은 경우
+    "Container Object 생성
+
+    "ALV Grid Object 생성
+    CREATE OBJECT po_grid
+      EXPORTING
+        i_parent      = po_cons
+        i_appl_events = 'X'.
+
+    "Field, Sort Catalog를 구성하고 ALV 초기값을 설정한다.
+    "APPEND_HEADER, APPEND_HEADER2 중 선택하여 사용
+    PERFORM alv_append_header USING pv_it_name
+                                     pv_structure_name.
+
+
+
+    PERFORM alv_append_sort  USING pv_it_name
+                                    pv_structure_name.
+
+
+
+    PERFORM alv_grid_init USING po_grid
+                                 pv_cons_name.
+
+
+
+<font color ="#0000FF">*     call method PO_GRID-&gt;set_ready_for_input.</font>
+
+
+
+    "ALV Grid를 출력한다.
+    CALL METHOD po_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_layout            = gs_layout
+        is_variant           = gv_variant
+        it_toolbar_excluding = gt_exclude
+        i_save               = gv_save
+        i_default            = 'X'
+      CHANGING
+        it_fieldcatalog      = fieldcat[]
+        it_outtab            = pt_output[]
+        it_sort              = gt_sort[]
+        it_filter            = gt_filter[].
+
+  ELSE.       "Object가 이미 생성된 경우
+<font color ="#0000FF">*     PERFORM ALV_TABLE_REFRESH USING PO_GRID 'X' SPACE.</font>
+  ENDIF.
+ENDFORM.                    "alv_create_object_gcon
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_ALV_TITLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_GT_DOCUMENT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+
+
+FORM set_alv_title  TABLES   pt_doc STRUCTURE gt_document.
+  REFRESH : pt_doc.
+<font color ="#0000FF">*  Title 내용</font>
+<font color ="#0000FF">*  CLEAR : PT_DOC.</font>
+<font color ="#0000FF">*  CONCATENATE TEXT-H01  ':'  P_BUKRS INTO PT_DOC-TEXT SEPARATED BY</font>
+<font color ="#0000FF">*SPACE</font>
+<font color ="#0000FF">*  .</font>
+<font color ="#0000FF">*  APPEND PT_DOC.</font>
+
+ENDFORM.                    " SET_ALV_TITLE
+
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  INITIALIZATION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM initialization .
+  DATA: ls_functxt TYPE smp_dyntxt.
+  CLEAR ls_functxt.
+  ls_functxt-icon_id    = icon_xls.
+  ls_functxt-icon_text  = ls_functxt-quickinfo  = TEXT-f01.
+  sscrfields-functxt_01 = ls_functxt.
+
+
+ENDFORM.                    " INITIALIZATION
+
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  PROCESS_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_TYPE     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM process_data  USING pv_type.
+  DATA: lt_routing_excel LIKE TABLE OF gt_routing_excel WITH HEADER LINE.
+  DATA: lt_data LIKE TABLE OF gt_data WITH HEADER LINE.
+
+<font color ="#0000FF">* Get Excel Data</font>
+  lt_routing_excel[] = gt_routing_excel[].
+  PERFORM get_excel_data TABLES lt_routing_excel lt_data.
+
+  PERFORM get_plnnr TABLES lt_data.
+<font color ="#0000FF">*  Description 조회</font>
+  PERFORM get_data_description TABLES lt_data.
+
+
+  REFRESH : gt_data.
+  IF lt_data[] IS NOT INITIAL.
+    gt_data[] = lt_data[].
+  ELSE.
+    IF pv_type IS INITIAL.
+      MESSAGE i005.
+      LEAVE LIST-PROCESSING.
+    ENDIF.
+  ENDIF.
+ENDFORM.                    " PROCESS_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  AT_SEL_SCR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM at_sel_scr .
+  CASE sscrfields-ucomm.
+    WHEN 'FC01'.
+      PERFORM xls_sample_download USING 'ZPPG0030' TEXT-f02.
+  ENDCASE.
+
+ENDFORM.                    " AT_SEL_SCR
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  XLS_SAMPLE_DOWNLOAD</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_1029   text</font>
+<font color ="#0000FF">*      --&gt;P_TEXT_F02  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM xls_sample_download  USING    p_objid p_title.
+
+  DATA :
+    lv_file_filter TYPE string,
+    ld_filename    TYPE string,  "파일이름
+    ld_path        TYPE string,  "파일 경로
+    ld_fullpath    TYPE string,  "파일 전체 경로(파일이름 포함)
+    ld_result      TYPE i,       "결과
+    wwwdata_item   LIKE wwwdatatab, "웹저장소 파일 정보
+    l_file         TYPE rlgrap-filename . "파일 전체 경로
+
+
+  CLEAR :  wwwdata_item,l_file .
+
+  lv_file_filter = TEXT-f02.
+<font color ="#0000FF">***--- Display save dialog window</font>
+  CALL METHOD cl_gui_frontend_services=&gt;file_save_dialog
+    EXPORTING
+      window_title      = p_title
+      default_extension = 'XLS'
+      default_file_name = p_title
+      file_filter       = lv_file_filter
+      initial_directory = 'c:_line'
+    CHANGING
+      filename          = ld_filename
+      path              = ld_path
+      fullpath          = ld_fullpath
+      user_action       = ld_result.
+
+
+
+
+  l_file = ld_fullpath.
+  CHECK l_file IS NOT INITIAL.
+
+
+
+  SELECT SINGLE *
+  INTO CORRESPONDING FIELDS OF wwwdata_item
+  FROM wwwdata WHERE objid = p_objid .
+
+  CALL FUNCTION 'DOWNLOAD_WEB_OBJECT'
+    EXPORTING
+      key         = wwwdata_item
+      destination = l_file.
+
+  CALL METHOD cl_gui_frontend_services=&gt;execute
+    EXPORTING
+      document               = ld_fullpath
+    EXCEPTIONS
+      cntl_error             = 1
+      error_no_gui           = 2
+      bad_parameter          = 3
+      file_not_found         = 4
+      path_not_found         = 5
+      file_extension_unknown = 6
+      error_execute_failed   = 7
+      synchronous_failed     = 8
+      not_supported_by_gui   = 9
+      OTHERS                 = 10.
+  IF sy-subrc &lt;&gt; 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+    WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+    EXIT .
+  ENDIF.
+ENDFORM.                    " XLS_SAMPLE_DOWNLOAD
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_EXCEL_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_ABAP_TRUE  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_excel_data  TABLES
+                 pt_routing_excel STRUCTURE gt_routing_excel
+                 pt_data STRUCTURE gt_data.
+
+<font color ="#0000FF">* Error Message</font>
+  DATA: lv_msg(255).
+<font color ="#0000FF">* Check existance X</font>
+  DATA: lv_exit.
+<font color ="#0000FF">* Check excel data</font>
+  DATA: lv_obligatory_field_check.
+<font color ="#0000FF">* Count excel data</font>
+  DATA: lv_tabix TYPE sy-tabix.
+
+<font color ="#0000FF">* GET EXCEL DATA</font>
+  DATA :
+    lv_index     LIKE sy-tabix,
+    lv_start_col TYPE i VALUE '1',    " 시작 열
+    lv_start_row TYPE i VALUE '2',    " 시작 행
+    lv_end_col   TYPE i VALUE '64',   " 마감 열
+    lv_end_row   TYPE i VALUE '65536', " 마감 행
+    lt_itab      TYPE  kcde_cells OCCURS 0 WITH HEADER LINE.
+
+  FIELD-SYMBOLS : &lt;lo_fs&gt;.
+<font color ="#0000FF">*&----------------------------------------------------------------------</font>
+<font color ="#0000FF">*     Excel 파일 데이타 그대로 Internal Table 로 올리기</font>
+<font color ="#0000FF">*&----------------------------------------------------------------------</font>
+  CALL FUNCTION 'KCD_EXCEL_OLE_TO_INT_CONVERT'
+    EXPORTING
+      filename                = p_fname
+      i_begin_col             = lv_start_col
+      i_begin_row             = lv_start_row
+      i_end_col               = lv_end_col
+      i_end_row               = lv_end_row
+    TABLES
+      intern                  = lt_itab
+    EXCEPTIONS
+      inconsistent_parameters = 1
+      upload_ole              = 2.
+  REFRESH  : pt_routing_excel,pt_data.
+
+  CLEAR  : pt_routing_excel,pt_data.
+  CLEAR  : gv_count.
+
+
+  CHECK NOT lt_itab[] IS INITIAL.
+
+  LOOP AT lt_itab.
+    MOVE : lt_itab-col TO lv_index.
+    ASSIGN COMPONENT lv_index OF STRUCTURE
+    pt_routing_excel TO &lt;lo_fs&gt;.
+    MOVE : lt_itab-value TO &lt;lo_fs&gt;.
+    AT END OF row.
+      APPEND pt_routing_excel.
+      MOVE-CORRESPONDING pt_routing_excel TO pt_data.
+      APPEND pt_data.
+      CLEAR pt_routing_excel.
+    ENDAT.
+  ENDLOOP.
+
+<font color ="#0000FF">*--BEGIN STANDARD VALUE DOGIT 수정 20150514  SK01DV02</font>
+  DATA : lv_idx(2) TYPE n.
+  DATA : lv_field(9).
+  FIELD-SYMBOLS : &lt;fv&gt;  .
+
+<font color ="#0000FF">*  LOOP AT PT_DATA.</font>
+<font color ="#0000FF">*    DO 6 TIMES.</font>
+<font color ="#0000FF">*      LV_IDX = LV_IDX + 1.</font>
+<font color ="#0000FF">*      CONCATENATE 'VGW' LV_IDX INTO LV_FIELD.</font>
+<font color ="#0000FF">*      ASSIGN COMPONENT LV_FIELD OF STRUCTURE PT_DATA TO &lt;FV&gt;.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      call function 'ZMMG_CONVERT_DIGIT' "숫자를 변환하는 함수</font>
+<font color ="#0000FF">*        EXPORTING</font>
+<font color ="#0000FF">*          I_DIGIT = &lt;FV&gt;</font>
+<font color ="#0000FF">*        IMPORTING</font>
+<font color ="#0000FF">*          O_DIGIT = &lt;FV&gt;.</font>
+<font color ="#0000FF">*    ENDDO.</font>
+<font color ="#0000FF">*    MODIFY PT_DATA.</font>
+<font color ="#0000FF">*    CLEAR LV_IDX.</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+<font color ="#0000FF">*--END    STANDARD VALUE DOGIT 수정 20150514  SK01DV02</font>
+
+  DELETE ADJACENT DUPLICATES FROM pt_data. "중복된 데이타 삭제
+  DESCRIBE TABLE  pt_data LINES gv_count.   "데이타 총개수
+  CLEAR:
+
+  gv_excel_success,
+  gv_excel_fail,
+  gv_excel_total.
+<font color ="#0000FF">**----Start: Added by EDU08 PP##：金文哲 on 2014-08-21 -------------------*</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------*</font>
+<font color ="#0000FF">*     添加：在Excel模版的#据中，如果##工#不是#前用#所在的##工#，   *</font>
+<font color ="#0000FF">*           #出警告信息。                                                  *</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------*</font>
+  DATA lv_werks TYPE werks_d.
+  GET PARAMETER ID 'WRK' FIELD lv_werks.
+
+  LOOP AT pt_data.
+<font color ="#0000FF">* Check Excel file field</font>
+    CLEAR lv_obligatory_field_check.
+
+    IF ( lv_werks IS NOT INITIAL ) AND ( pt_data-werks NE lv_werks ).
+      WRITE TEXT-m03 TO lv_msg.
+      REPLACE '&' WITH lv_werks INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+<font color ="#0000FF">**----End: Added by EDU08 PP##：金文哲 on 2014-08-21 ---------------------*</font>
+    IF pt_data-matnr IS INITIAL
+      AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ELSE.
+      CLEAR lv_exit.
+      PERFORM get_mtart_meins USING pt_data-matnr
+            CHANGING pt_data-mtart pt_data-gmein lv_exit.
+      IF lv_exit IS INITIAL.
+        MESSAGE s310 INTO lv_msg.
+        PERFORM get_check_message USING pt_data-msg lv_msg
+        CHANGING pt_data-msg pt_data-icon.
+        CLEAR: lv_msg.
+      ENDIF.
+
+    ENDIF.
+    IF pt_data-werks IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ELSE.
+      CLEAR lv_exit.
+      PERFORM check_werks USING pt_data-werks
+            CHANGING lv_exit.
+      IF lv_exit IS INITIAL.
+        MESSAGE s311 INTO lv_msg.
+        PERFORM get_check_message USING pt_data-msg lv_msg
+        CHANGING pt_data-msg pt_data-icon.
+        CLEAR: lv_msg.
+      ENDIF.
+
+    ENDIF.
+    IF pt_data-sttag IS INITIAL
+      AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+<font color ="#0000FF">*    IF PT_DATA-PLNAL IS INITIAL</font>
+<font color ="#0000FF">*      AND LV_OBLIGATORY_FIELD_CHECK IS INITIAL.</font>
+<font color ="#0000FF">*      LV_OBLIGATORY_FIELD_CHECK = 'X'.</font>
+<font color ="#0000FF">*      MESSAGE S301 INTO LV_MSG.</font>
+<font color ="#0000FF">*      PERFORM GET_CHECK_MESSAGE USING PT_DATA-MSG LV_MSG</font>
+<font color ="#0000FF">*      CHANGING PT_DATA-MSG PT_DATA-ICON.</font>
+<font color ="#0000FF">*      CLEAR: LV_MSG.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+    IF pt_data-ktext IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-verwe IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-statu IS INITIAL
+      AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-losvn IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-losbs IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-vornr IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-arbpl IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+<font color ="#0000FF">*    IF PT_DATA-STEUS IS INITIAL</font>
+<font color ="#0000FF">*       AND LV_OBLIGATORY_FIELD_CHECK IS INITIAL.</font>
+<font color ="#0000FF">*      LV_OBLIGATORY_FIELD_CHECK = 'X'.</font>
+<font color ="#0000FF">*      MESSAGE S301 INTO LV_MSG.</font>
+<font color ="#0000FF">*      PERFORM GET_CHECK_MESSAGE USING PT_DATA-MSG LV_MSG</font>
+<font color ="#0000FF">*      CHANGING PT_DATA-MSG PT_DATA-ICON.</font>
+<font color ="#0000FF">*      CLEAR: LV_MSG.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+    IF pt_data-ltxa1 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+
+    IF pt_data-bmsch IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-vgw01 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-vgw02 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-vgw03 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-vgw04 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+    IF pt_data-vgw05 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+
+    IF pt_data-vgw06 IS INITIAL
+       AND lv_obligatory_field_check IS INITIAL.
+      lv_obligatory_field_check = 'X'.
+      MESSAGE s301 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Check Material Code, Plant</font>
+    SELECT COUNT( * ) FROM marc
+      WHERE matnr = pt_data-matnr
+      AND werks = pt_data-werks.
+    IF sy-subrc &lt;&gt; 0.
+      MESSAGE s302 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+<font color ="#0000FF">* Check Work Center</font>
+    SELECT COUNT( * ) FROM crhd
+      WHERE arbpl = pt_data-arbpl
+      AND werks = pt_data-werks
+      AND lvorm &lt;&gt; 'X'.
+    IF sy-subrc &lt;&gt; 0.
+      MESSAGE s303 INTO lv_msg.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+      CLEAR: lv_msg.
+    ENDIF.
+
+<font color ="#0000FF">* Check Routing Existence</font>
+    PERFORM check_exit
+    USING pt_data-matnr
+          pt_data-werks
+          pt_data-plnnr
+          pt_data-plnal
+    CHANGING lv_exit.
+
+    CASE lv_exit .
+      WHEN 'X'.
+        MESSAGE s304 INTO lv_msg.
+        PERFORM get_check_message USING pt_data-msg lv_msg
+        CHANGING pt_data-msg pt_data-icon.
+        CLEAR: lv_msg.
+      WHEN '1'.
+        lv_msg = TEXT-m02.
+        PERFORM get_check_message USING pt_data-msg lv_msg
+        CHANGING pt_data-msg pt_data-icon.
+        CLEAR: lv_msg.
+
+
+    ENDCASE.
+
+<font color ="#0000FF">* Check Operation/Activity Number</font>
+    TRY.
+        UNPACK pt_data-vornr TO pt_data-vornr.
+      CATCH cx_sy_conversion_no_number.
+        MESSAGE s306 INTO lv_msg.
+        PERFORM get_check_message USING pt_data-msg lv_msg
+        CHANGING pt_data-msg pt_data-icon.
+        CLEAR: lv_msg.
+
+    ENDTRY.
+    REPLACE ',' WITH '' INTO pt_data-bmsch.
+    CONDENSE  pt_data-bmsch NO-GAPS.
+    TRANSLATE pt_data-matnr TO UPPER CASE.
+    TRANSLATE pt_data-arbpl TO UPPER CASE.
+    $$conv_exit_input: 'ALPHA' pt_data-plnal pt_data-plnal.
+
+<font color ="#0000FF">* Set Icon</font>
+    IF pt_data-msg IS INITIAL.
+      pt_data-icon = icon_led_yellow.
+
+    ELSE.
+      pt_data-icon = icon_led_red.
+    ENDIF.
+
+<font color ="#0000FF">* Add Default Value</font>
+    pt_data-vge01 = c_vge00.
+    pt_data-vge02 = c_vge00.
+    pt_data-vge03 = c_vge00.
+    pt_data-vge04 = c_vge00.
+    pt_data-vge05 = c_vge00.
+    pt_data-vge06 = c_vge00.
+
+<font color ="#0000FF">*    PT_DATA-LAR01 = C_LAR01.</font>
+<font color ="#0000FF">*    PT_DATA-LAR02 = C_LAR02.</font>
+<font color ="#0000FF">*    PT_DATA-LAR03 = C_LAR03.</font>
+<font color ="#0000FF">*    PT_DATA-LAR04 = C_LAR04.</font>
+<font color ="#0000FF">*    PT_DATA-LAR05 = C_LAR05.</font>
+<font color ="#0000FF">*    PT_DATA-LAR06 = C_LAR06.</font>
+
+<font color ="#0000FF">* Move Data</font>
+
+    TRANSLATE pt_data-arbpl TO UPPER CASE.
+    IF pt_data-msg IS INITIAL.
+      gv_excel_success = gv_excel_success + 1.
+    ELSE.
+      gv_excel_fail  = gv_excel_fail  + 1.
+    ENDIF.
+
+    gv_excel_total =  gv_excel_total + 1.
+
+    MODIFY pt_data.
+
+  ENDLOOP.
+
+
+ENDFORM.                    " GET_EXCEL_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  ALV_CELL_STYLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PT_OUTPUT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_cell_style  TABLES   pt_data STRUCTURE gt_data.
+  DATA: ls_data LIKE LINE OF gt_data.
+  DATA:ls_celltab TYPE lvc_s_styl.
+  LOOP AT pt_data INTO ls_data.
+
+    CLEAR: ls_celltab,ls_data-celltab.
+    ls_celltab-fieldname = 'CHECK'.
+    IF ls_data-icon = icon_led_red.
+      ls_celltab-style = cl_gui_alv_grid=&gt;mc_style_disabled.
+    ELSE.
+      ls_celltab-style = cl_gui_alv_grid=&gt;mc_style_enabled.
+    ENDIF.
+    INSERT ls_celltab INTO TABLE ls_data-celltab.
+
+    MODIFY pt_data FROM ls_data TRANSPORTING celltab .
+    CLEAR: ls_data.
+  ENDLOOP.
+ENDFORM.                    " ALV_CELL_STYLE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_CHECK_MESSAGE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_MSG  text</font>
+<font color ="#0000FF">*      --&gt;P_LV_MSG  text</font>
+<font color ="#0000FF">*      &lt;--P_PT_DATA_MSG  text</font>
+<font color ="#0000FF">*      &lt;--P_PT_DATA_ICON  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_check_message  USING    pi_msge
+                                 pv_msge
+                        CHANGING po_msge
+                                 p_icon.
+  CONCATENATE pi_msge '/'  pv_msge '/' INTO po_msge SEPARATED BY space.
+  p_icon = icon_led_red.
+ENDFORM.                    " GET_CHECK_MESSAGE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CREATE_ROUTING</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM create_routing .
+  DATA: lv_new_plnal,
+        lv_end_plnal.
+
+
+  DELETE gt_data WHERE check &lt;&gt; 'X'.
+  SORT gt_data BY matnr werks plnnr vornr.
+  LOOP AT gt_data.
+    CLEAR: lv_new_plnal,lv_end_plnal,gv_matnr.
+    gv_matnr = gt_data-matnr.
+
+    AT NEW plnal.
+      lv_new_plnal = 'X'.
+    ENDAT.
+    AT END OF plnal.
+      lv_end_plnal = 'X'.
+      gv_index_now = sy-tabix.
+    ENDAT.
+
+    PERFORM execute_insert USING lv_new_plnal lv_end_plnal.
+  ENDLOOP.
+
+  gv_bapi_done = 'X'.
+ENDFORM.                    " CREATE_ROUTING
+
+
+<font color ="#0000FF">**----Start: Added by EDU08 PP##：金文哲 on 2014-08-21 -------------------*</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------*</font>
+<font color ="#0000FF">*     添加：Operation/Activity Number = “0010” 的#候新#建Routing，      *</font>
+<font color ="#0000FF">*           否###在'0010'所在的Routing上添加Operation。                  *</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------*</font>
+FORM create_routing2.
+  DATA: lv_idx  TYPE i,
+        lt_temp LIKE TABLE OF gt_data.
+
+  CLEAR lv_idx.
+  DELETE gt_data WHERE check NE 'X'.
+  SORT gt_data BY xlsid.  " 按Excel中的序#排序 --
+  LOOP AT gt_data.
+    CLEAR: gv_matnr.
+    ADD 1 TO lv_idx.  gt_data-index = lv_idx.
+    MODIFY gt_data TRANSPORTING index.
+    gv_matnr = gt_data-matnr.
+    " 活##'0100'意味着一#Routing的#始，上一#Routing的#束 --
+    IF gt_data-vornr EQ '0010'.
+      IF gt_operation[] IS NOT INITIAL.
+        gv_index_now = lv_idx.
+        PERFORM call_bapi_function.
+        PERFORM handle_bapi_commit2 TABLES lt_temp.
+        REFRESH lt_temp.
+      ENDIF.
+
+      " Routing的###据 --
+      PERFORM clear_bapi_data.
+      PERFORM fill_gt_materialtaskallocation.
+      PERFORM fill_gt_task.
+
+      " Routing的操作(行#目#据) --
+      PERFORM fill_gt_operation.
+      APPEND gt_data TO lt_temp.
+    ELSE. " 添加活##'0100'下的操作 --
+      PERFORM fill_gt_operation.
+      APPEND gt_data TO lt_temp.
+    ENDIF.
+
+    AT LAST. " #据的#尾，#建#一#Routing --
+      gv_index_now = lv_idx.
+      PERFORM call_bapi_function.
+      PERFORM handle_bapi_commit2 TABLES lt_temp.
+      REFRESH lt_temp.
+    ENDAT.
+    CLEAR gt_data.
+  ENDLOOP.
+  gv_bapi_done = 'X'.
+ENDFORM.                    " CREATE_ROUTING2
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  handle_bapi_commit2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PT_DATA    text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM handle_bapi_commit2 TABLES pt_data STRUCTURE gt_data.
+  DATA: lv_msg  TYPE char255,
+        ls_temp LIKE LINE OF gt_data,
+        ls_tem2 LIKE LINE OF gt_data.
+  CLEAR: lv_msg, ls_temp, ls_tem2.
+  READ TABLE gt_return WITH KEY type = 'S'.
+  IF sy-subrc = 0.
+    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+      EXPORTING
+        wait = 'X'.
+    LOOP AT pt_data INTO ls_temp.
+      READ TABLE gt_data INTO ls_tem2 WITH KEY index = ls_temp-index.
+      IF sy-subrc EQ 0.
+        ls_tem2-plnnr = gv_group.
+        ls_tem2-plnal = gv_groupcounter. "AUTO --
+        ls_tem2-icon = icon_led_green.
+        MESSAGE s004 INTO ls_tem2-msg.
+        MODIFY gt_data FROM ls_tem2 INDEX sy-tabix TRANSPORTING plnnr plnal icon msg.
+      ENDIF.
+      CLEAR: ls_temp, ls_tem2.
+    ENDLOOP.
+    gv_ok = gv_ok + ( gv_index_now - gv_index_last ).
+  ELSE.
+    ROLLBACK WORK.
+    PERFORM make_message_table TABLES gt_return CHANGING lv_msg.
+    LOOP AT pt_data INTO ls_temp.
+      READ TABLE gt_data INTO ls_tem2 WITH KEY index = ls_temp-index.
+      IF sy-subrc EQ 0.
+        ls_tem2-icon = icon_led_red.
+        ls_tem2-msg  = lv_msg.
+        MODIFY gt_data FROM ls_tem2 INDEX sy-tabix TRANSPORTING icon msg.
+      ENDIF.
+      CLEAR: ls_temp, ls_tem2.
+    ENDLOOP.
+    gv_error = gv_error + ( gv_index_now - gv_index_last ).
+  ENDIF.
+  gv_index_last = gv_index_now.
+  WAIT UP TO '0.5' SECONDS.
+ENDFORM.                    " HANDLE_BAPI_COMMIT
+
+<font color ="#0000FF">**----End: Added by EDU08 PP##：金文哲 on 2014-08-21 ---------------------*</font>
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXECUTE_INSERT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LV_NEW_PLNNR  text</font>
+<font color ="#0000FF">*      --&gt;P_LV_END_PLNNR  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM execute_insert  USING p_new_plnal p_end_plnal.
+
+  IF p_new_plnal = 'X'.
+    PERFORM clear_bapi_data.
+    PERFORM fill_gt_materialtaskallocation.
+    PERFORM fill_gt_task.
+  ENDIF.
+  PERFORM fill_gt_operation.
+
+
+  CHECK p_end_plnal IS NOT INITIAL.
+  PERFORM call_bapi_function.
+  PERFORM handle_bapi_commit.
+
+ENDFORM.                    " EXECUTE_INSERT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CLEAR_BAPI_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM clear_bapi_data .
+  $$clear:
+  gt_task,
+  gt_componentallocation,
+  gt_materialtaskallocation,
+  gt_operation,
+  gt_return.
+  CLEAR: gv_group, gv_groupcounter.
+ENDFORM.                    " CLEAR_BAPI_DATA
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  FILL_GT_TASK</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM fill_gt_task .
+  gt_task-task_list_group =  gt_data-plnnr.
+  "기존에 그룹번호를 가져간다.
+
+<font color ="#0000FF">*  GT_TASK-GROUP_COUNTER           = GT_DATA-PLNAL."AUTO</font>
+  gt_task-valid_from              = gt_data-sttag.
+  gt_task-task_list_usage         = gt_data-verwe.
+  gt_task-plant                   = gt_data-werks.
+  gt_task-task_list_status        = gt_data-statu.
+  gt_task-task_measure_unit       = gt_data-gmein .
+  gt_task-description             = gt_data-ktext.
+  gt_task-lot_size_from           = gt_data-losvn.
+  gt_task-lot_size_to             = gt_data-losbs.
+  APPEND gt_task.
+
+ENDFORM.                    " FILL_GT_TASK
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  FILL_GT_OPERATION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM fill_gt_operation .
+  gt_operation-task_list_group         =  gt_data-plnnr.
+  "기존에 그룹번호를 가져간다.
+
+<font color ="#0000FF">*  GT_OPERATION-GROUP_COUNTER           = GT_DATA-PLNAL. "AUTO</font>
+  gt_operation-valid_from              = gt_data-sttag.
+  gt_operation-activity                = gt_data-vornr.
+  gt_operation-control_key             = gt_data-steus.
+  gt_operation-work_cntr               = gt_data-arbpl.
+  gt_operation-plant                   = gt_data-werks.
+  gt_operation-description             = gt_data-ltxa1.
+  gt_operation-operation_measure_unit  = gt_data-gmein.
+
+  gt_operation-denominator             = '1'. "GT_DATA-UMREN.
+  gt_operation-nominator               = '1'. "GT_DATA-UMREZ.
+  gt_operation-base_quantity           = gt_data-bmsch.
+  gt_operation-std_value_01            = gt_data-vgw01.
+  gt_operation-std_unit_01             = gt_data-vge01.
+  gt_operation-acttype_01              = gt_data-lar01.
+  gt_operation-std_value_02            = gt_data-vgw02.
+  gt_operation-std_unit_02             = gt_data-vge02.
+  gt_operation-acttype_02              = gt_data-lar02.
+  gt_operation-std_value_03            = gt_data-vgw03.
+  gt_operation-std_unit_03             = gt_data-vge03.
+  gt_operation-acttype_03              = gt_data-lar03.
+  gt_operation-std_value_04            = gt_data-vgw04.
+  gt_operation-std_unit_04             = gt_data-vge04.
+  gt_operation-acttype_04              = gt_data-lar04.
+  gt_operation-std_value_05            = gt_data-vgw05.
+  gt_operation-std_unit_05             = gt_data-vge05.
+  gt_operation-acttype_05              = gt_data-lar05.
+  gt_operation-std_value_06            = gt_data-vgw06.
+  gt_operation-std_unit_06             = gt_data-vge06.
+  gt_operation-acttype_06              = gt_data-lar06.
+  gt_operation-cost_relevant           = 'X'.
+
+  APPEND gt_operation.
+ENDFORM.                    " FILL_GT_OPERATION
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CALL_BAPI_FUNCTION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM call_bapi_function .
+  call function <a href ="zppg_raterouting_create_copy/zppg_raterouting_create_copy.html">'ZPPG_RATEROUTING_CREATE_COPY'</a>
+    IMPORTING
+      group                  = gv_group
+      groupcounter           = gv_groupcounter
+    TABLES
+      task                   = gt_task
+      materialtaskallocation = gt_materialtaskallocation
+      operation              = gt_operation
+<font color ="#0000FF">*     COMPONENTALLOCATION    = GT_COMPONENTALLOCATION</font>
+      return                 = gt_return.
+
+
+ENDFORM.                    " CALL_BAPI_FUNCTION
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  HANDLE_BAPI_COMMIT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM handle_bapi_commit .
+  READ TABLE gt_return WITH KEY type = 'S'.
+  IF sy-subrc = 0.
+    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+      EXPORTING
+        wait = 'X'.
+    gt_data-plnnr = gv_group.
+    gt_data-plnal = gv_groupcounter. "AUTO
+    gt_data-icon = icon_led_green.
+    MESSAGE s004 INTO gt_data-msg.
+    MODIFY gt_data FROM gt_data
+    TRANSPORTING plnnr  plnal
+    icon msg .
+    gv_ok = gv_ok + ( gv_index_now - gv_index_last ).
+
+  ELSE.
+    ROLLBACK WORK.
+    PERFORM make_message_table TABLES gt_return CHANGING gt_data-msg.
+
+
+    gt_data-icon = icon_led_red.
+    gv_error = gv_error + ( gv_index_now - gv_index_last ).
+
+    MODIFY gt_data FROM gt_data
+    TRANSPORTING icon msg ."MATNR." WHERE MATNR = GV_MATNR
+<font color ="#0000FF">*    AND WERKS = GT_DATA-WERKS</font>
+  ENDIF.
+
+  gv_index_last = gv_index_now.
+ENDFORM.                    " HANDLE_BAPI_COMMIT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CLEAR_ALV</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM clear_alv .
+<font color ="#0000FF">*  GV_DG_SPLITTER-&gt;FREE( ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  CLEAR:</font>
+<font color ="#0000FF">*  GV_GRID,</font>
+<font color ="#0000FF">*  GV_DG_SPLITTER,</font>
+<font color ="#0000FF">*  GV_DG_DYNDOC_ID,</font>
+<font color ="#0000FF">*  GV_DG_PARENT_GRID,</font>
+<font color ="#0000FF">*  GV_DG_HTML_CNTRL,</font>
+<font color ="#0000FF">*  GV_DG_PARENT_HTML,</font>
+<font color ="#0000FF">*  GT_FIELDCAT,</font>
+<font color ="#0000FF">*  GS_FIELDCAT,</font>
+<font color ="#0000FF">*  GT_LAYOUT,</font>
+<font color ="#0000FF">*  GS_S_STBL,</font>
+<font color ="#0000FF">*  GV_COLS.</font>
+
+ENDFORM.                    " CLEAR_ALV
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DELETE_ROUTING</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM delete_routing .
+  DATA: lv_new_plnnr,
+        lv_end_plnnr.
+
+  DELETE gt_data WHERE check &lt;&gt; 'X'.
+
+  SORT gt_data BY matnr werks plnnr plnal vornr.
+  LOOP AT gt_data.
+    CLEAR: lv_new_plnnr,lv_end_plnnr,gv_matnr.
+    gv_matnr = gt_data-matnr.
+
+    AT NEW plnal.
+      lv_new_plnnr = 'X'.
+    ENDAT.
+    AT END OF plnal.
+      lv_end_plnnr = 'X'.
+      gv_index_now = sy-tabix.
+    ENDAT.
+
+    PERFORM execute_delete USING lv_new_plnnr lv_end_plnnr.
+
+  ENDLOOP.
+  gv_bapi_done = 'X'.
+
+<font color ="#0000FF">*****************************************</font>
+<font color ="#0000FF">*  DATA: LS_OPTION LIKE CTU_PARAMS.</font>
+<font color ="#0000FF">*  DATA:LV_EXIT.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LS_OPTION-DISMODE  = 'N'.</font>
+<font color ="#0000FF">*  LS_OPTION-UPDMODE  = 'S'.</font>
+<font color ="#0000FF">*  LS_OPTION-DEFSIZE  = 'X'.</font>
+<font color ="#0000FF">*  LS_OPTION-RACOMMIT = 'X'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LOOP AT GT_DATA.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* IF GT_DATA-CHECK = 'X'.</font>
+<font color ="#0000FF">** Check Routing Existence</font>
+<font color ="#0000FF">*  PERFORM CHECK_EXIT</font>
+<font color ="#0000FF">*  USING GT_DATA-MATNR</font>
+<font color ="#0000FF">*        GT_DATA-WERKS</font>
+<font color ="#0000FF">*        GT_DATA-PLNAL</font>
+<font color ="#0000FF">*  CHANGING LV_EXIT.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  IF LV_EXIT IS NOT INITIAL.</font>
+<font color ="#0000FF">*    CLEAR:GT_BDCDATA[],GT_MESSTAB[].</font>
+<font color ="#0000FF">*    PERFORM DYNPRO USING:</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    'X' 'SAPLCPDI'                           '1010',</font>
+<font color ="#0000FF">*    ' ' 'BDC_OKCODE'                         '=ALD1',</font>
+<font color ="#0000FF">*    ' ' 'RC27M-MATNR'                        GT_DATA-MATNR,</font>
+<font color ="#0000FF">*    ' ' 'RC27M-WERKS'                        GT_DATA-WERKS,</font>
+<font color ="#0000FF">*    ' ' 'RC271-PLNNR'                        GT_DATA-PLNNR,</font>
+<font color ="#0000FF">*    ' ' 'RC271-PLNAL'                        GT_DATA-PLNAL,</font>
+<font color ="#0000FF">*    ' ' 'RC271-STTAG'                        GT_DATA-STTAG,</font>
+<font color ="#0000FF">*    'X' 'SAPLCPDA'                           '1200',</font>
+<font color ="#0000FF">*    ' ' 'BDC_OKCODE'                         '=BU',</font>
+<font color ="#0000FF">*    ' ' 'PLKOD-DELKZ'                        'X'.</font>
+<font color ="#0000FF">*    CALL TRANSACTION 'CA22'</font>
+<font color ="#0000FF">*    USING GT_BDCDATA</font>
+<font color ="#0000FF">*          OPTIONS FROM LS_OPTION</font>
+<font color ="#0000FF">*          MESSAGES INTO GT_MESSTAB.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    PERFORM GET_MESSAGES.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*    GV_ERROR = GV_ERROR + ( GV_INDEX_NOW - GV_INDEX_LAST ).</font>
+<font color ="#0000FF">*    GT_DATA-ICON = ICON_LED_RED.</font>
+<font color ="#0000FF">*    MESSAGE S308 INTO GT_DATA-MSG.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  MODIFY GT_DATA FROM GT_DATA</font>
+<font color ="#0000FF">*  TRANSPORTING ICON MSG.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  GV_INDEX_LAST = GV_INDEX_NOW.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  GV_BAPI_DONE = 'X'.</font>
+
+ENDFORM.                    " DELETE_ROUTING
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXECUTE_DELETE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LV_NEW_PLNNR  text</font>
+<font color ="#0000FF">*      --&gt;P_LV_END_PLNNR  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM execute_delete  USING
+      p_lv_new_plnnr
+      p_lv_end_plnnr.
+  DATA: ls_option LIKE ctu_params.
+
+
+  ls_option-dismode  = 'N'.
+  ls_option-updmode  = 'S'.
+  ls_option-defsize  = 'X'.
+  ls_option-racommit = 'X'.
+
+  DATA:lv_exit.
+
+
+
+  CHECK p_lv_end_plnnr IS NOT INITIAL.
+
+  .
+<font color ="#0000FF">* Check Routing Existence</font>
+  PERFORM check_routing
+  USING
+        gt_data-plnnr
+        gt_data-plnal
+  CHANGING lv_exit.
+
+  IF lv_exit IS NOT INITIAL.
+    CLEAR:gt_bdcdata[],gt_messtab[].
+    PERFORM dynpro USING:
+
+    'X' 'SAPLCPDI'                           '1010',
+    ' ' 'BDC_OKCODE'                         '=ALD1',
+    ' ' 'RC27M-MATNR'                        gt_data-matnr,
+    ' ' 'RC27M-WERKS'                        gt_data-werks,
+    ' ' 'RC271-PLNNR'                        gt_data-plnnr,
+    ' ' 'RC271-PLNAL'                        gt_data-plnal,
+    ' ' 'RC271-STTAG'                        gt_data-sttag,
+    'X' 'SAPLCPDA'                           '1200',
+    ' ' 'BDC_OKCODE'                         '=BU',
+    ' ' 'PLKOD-DELKZ'                        'X'.
+    CALL TRANSACTION 'CA22'
+    USING gt_bdcdata
+          OPTIONS FROM ls_option
+          MESSAGES INTO gt_messtab.
+
+    PERFORM get_messages.
+  ELSE.
+    gv_error = gv_error + ( gv_index_now - gv_index_last ).
+    gt_data-icon = icon_led_red.
+    MESSAGE s308 INTO gt_data-msg.
+
+  ENDIF.
+
+  MODIFY gt_data FROM gt_data
+  TRANSPORTING icon msg.
+
+
+  gv_index_last = gv_index_now.
+ENDFORM.                    " EXECUTE_DELETE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHECK_EXIT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_MATNR  text</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_WERKS  text</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_PLNAL  text</font>
+<font color ="#0000FF">*      &lt;--P_LV_EXIT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM check_exit  USING    p_matnr
+                          p_werks
+                          p_plnnr
+                          p_plnal
+                 CHANGING p_exit.
+  CLEAR p_exit.
+  CHECK p_plnnr IS INITIAL.
+  DATA: lt_plko LIKE TABLE OF plko WITH HEADER LINE.
+
+  SELECT m~plnnr m~plnal
+    INTO CORRESPONDING FIELDS OF TABLE lt_plko
+    FROM mapl AS m
+    INNER JOIN plko AS k
+    ON m~plnnr = k~plnnr
+    AND m~plnal = k~plnal
+    INNER JOIN plpo AS p
+    ON k~plnnr = p~plnnr
+    WHERE m~matnr = p_matnr AND
+          m~werks = p_werks AND
+          m~plnty = 'R'     AND
+          m~loekz  &lt;&gt; 'X'.
+
+  IF p_plnal IS NOT INITIAL.
+    DELETE lt_plko WHERE plnal &lt;&gt; p_plnal.
+  ENDIF.
+
+  IF lt_plko[] IS NOT INITIAL.
+    READ TABLE lt_plko WITH KEY plnal = '01'.
+    IF sy-subrc = 0 AND  p_plnal IS INITIAL.
+      p_exit = '1'.
+    ELSE.
+      p_exit = 'X'.
+    ENDIF.
+  ENDIF.
+
+<font color ="#0000FF">*  IF P_PLNAL IS NOT INITIAL.</font>
+<font color ="#0000FF">*  CLEAR : MAPL.</font>
+<font color ="#0000FF">*  SELECT * FROM MAPL</font>
+<font color ="#0000FF">*           WHERE MATNR = P_MATNR AND</font>
+<font color ="#0000FF">*                 WERKS = P_WERKS AND</font>
+<font color ="#0000FF">*                 PLNTY = 'R'     AND</font>
+<font color ="#0000FF">*                 PLNAL = P_PLNAL AND</font>
+<font color ="#0000FF">*                 LOEKZ &lt;&gt; 'X'.</font>
+<font color ="#0000FF">*  ENDSELECT.</font>
+<font color ="#0000FF">*  IF MAPL IS INITIAL.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    CLEAR: P_EXIT.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*    P_EXIT = 'X'.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*  SELECT COUNT( * ) FROM   MAPL</font>
+<font color ="#0000FF">*            WHERE MATNR   = P_MATNR   AND</font>
+<font color ="#0000FF">*                  WERKS   = P_WERKS  AND</font>
+<font color ="#0000FF">*                  PLNTY   = 'R'      AND</font>
+<font color ="#0000FF">*                  PLNAL   = '01'     AND</font>
+<font color ="#0000FF">*                  LOEKZ &lt;&gt; 'X'.</font>
+<font color ="#0000FF">*  IF SY-SUBRC = 0.</font>
+<font color ="#0000FF">*    P_EXIT = '1'.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*     CLEAR: P_EXIT.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+
+
+ENDFORM.                    " CHECK_EXIT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MESSAGES</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_messages .
+  READ TABLE gt_messtab WITH KEY msgtyp = 'S'.
+  IF sy-subrc = 0.
+    gv_ok = gv_ok + ( gv_index_now - gv_index_last ).
+    gt_data-icon = icon_led_green.
+    MESSAGE s309 INTO gt_data-msg.
+    WAIT UP TO 5 SECONDS.
+<font color ="#0000FF">*    PERFORM EXECUTE_CA98.  "성공했으면 CA98 콜함.</font>
+  ELSE.
+    gv_error = gv_error + ( gv_index_now - gv_index_last ).
+    gt_data-icon = icon_led_red.
+    LOOP AT gt_messtab.
+      CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+        EXPORTING
+          msgid               = gt_messtab-msgid
+          msgnr               = gt_messtab-msgnr
+          msgv1               = gt_messtab-msgv1
+          msgv2               = gt_messtab-msgv2
+          msgv3               = gt_messtab-msgv3
+          msgv4               = gt_messtab-msgv4
+        IMPORTING
+          message_text_output = gv_mseg.
+
+      CONCATENATE gt_data-msg  '/' gv_mseg
+      INTO gt_data-msg.
+
+    ENDLOOP.
+  ENDIF.
+
+ENDFORM.                    " GET_MESSAGES
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXECUTE_CA98</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM execute_ca98 .
+  DATA: ls_option LIKE ctu_params.
+  CLEAR : gt_bdcdata, gt_bdcdata[].
+
+
+  ls_option-dismode  = 'N'.
+  ls_option-updmode  = 'S'.
+  ls_option-defsize  = 'X'.
+  ls_option-racommit = 'X'.
+
+
+  SET PARAMETER ID 'MAT' FIELD ''.
+  SET PARAMETER ID 'WRK' FIELD ''.
+
+  PERFORM dynpro USING:
+        'X'        'RCPREDE2'       '1000',
+        ' '        'BDC_OKCODE'     '=ONLI',
+        ' '        'MATNR-LOW'      '',
+        ' '        'PLNTY-LOW'      'N',
+        ' '        'PLNNR-LOW'      gt_data-plnnr,
+        ' '        'PLNAL-LOW'      '1',
+        ' '        'STT'            'X',
+        ' '        'PROT'           'X'.
+
+  PERFORM dynpro USING:
+        'X'        'SAPLCPRE'             '1010',
+        ' '        'BDC_OKCODE'           '=BACK',
+        'X'        'SAPMSSY0'             '0120',
+        ' '        'BDC_OKCODE'           '=BACK',
+        'X'        'RCPREDE2'             '1000',
+        ' '        'BDC_OKCODE'           '/EE'.
+
+
+  CALL TRANSACTION 'CA98' USING gt_bdcdata
+        OPTIONS FROM ls_option.
+
+ENDFORM.                    " EXECUTE_CA98
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DYNPRO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_3419   text</font>
+<font color ="#0000FF">*      --&gt;P_3420   text</font>
+<font color ="#0000FF">*      --&gt;P_3421   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM dynpro   USING    dynbegin name value.
+  CLEAR gt_bdcdata.
+  IF dynbegin = 'X'.
+    MOVE : name      TO gt_bdcdata-program,
+    value     TO gt_bdcdata-dynpro,
+    dynbegin  TO gt_bdcdata-dynbegin.
+  ELSE.
+    MOVE : name      TO gt_bdcdata-fnam,
+    value     TO gt_bdcdata-fval.
+  ENDIF.
+  APPEND gt_bdcdata.
+ENDFORM.                    " DYNPRO
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MATNR_DESC</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_MATNR  text</font>
+<font color ="#0000FF">*      &lt;--P_PT_DATA_MAKTX  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MTART_MEINS</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_MATNR  text</font>
+<font color ="#0000FF">*      &lt;--P_PT_DATA_MTART  text</font>
+<font color ="#0000FF">*      &lt;--P_PT_DATA_MEINS  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_mtart_meins  USING   pv_in
+                      CHANGING pv_out1
+                               pv_out2
+                               pv_out3.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = pv_in
+    IMPORTING
+      output = pv_in.
+
+  SELECT SINGLE mtart  meins
+    INTO (pv_out1, pv_out2)
+    FROM mara
+    WHERE matnr = pv_in
+    AND lvorm &lt;&gt;  'X'.
+  IF sy-subrc = 0.
+    pv_out3 = 'X'."Success
+  ELSE.
+    CLEAR pv_out3.
+  ENDIF.
+ENDFORM.                    " GET_MTART_MEINS
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHECK_WERKS</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PT_DATA_WERKS  text</font>
+<font color ="#0000FF">*      &lt;--P_LV_EXIT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM check_werks  USING    pv_in
+                  CHANGING pv_out.
+  SELECT COUNT( * ) FROM marc
+    WHERE werks = pv_in.
+  IF sy-subrc = 0.
+    pv_out = 'X'.
+  ELSE.
+    CLEAR pv_out.
+  ENDIF.
+ENDFORM.                    " CHECK_WERKS
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CREATE_CUST_CONTAINER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PO_CONS  text</font>
+<font color ="#0000FF">*      --&gt;P_PV_CONS_NAME  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM  create_cust_container USING p_parent TYPE REF TO
+cl_gui_custom_container
+                                 p_name.
+
+  CREATE OBJECT p_parent
+    EXPORTING
+      repid          = sy-repid
+      dynnr          = sy-dynnr
+      container_name = p_name.
+
+ENDFORM.                    " CREATE_CUST_CONTAINER
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CREATE_GRID_CONTAINER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_PO_CONS  text</font>
+<font color ="#0000FF">*      --&gt;P_PO_GRID  text</font>
+<font color ="#0000FF">*      --&gt;P_ABAP_TRUE  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM create_grid_container  USING    p_parent
+                                    po_grid TYPE REF TO cl_gui_alv_grid
+                                    p_appl.
+
+  CHECK po_grid IS INITIAL.
+  CREATE OBJECT po_grid
+    EXPORTING
+      i_parent      = p_parent
+      i_appl_events = p_appl. " 'X' -&gt; APP EVENT, '' -&gt; SYSTEM EVENT
+
+ENDFORM.                    " CREATE_GRID_CONTAINER
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DATA_COUNT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM data_count .
+  CLEAR:
+  gv_processing_success,
+  gv_processing_fail,
+  gv_processing_total.
+  gv_processing_success = gv_ok.
+  gv_processing_fail    = gv_error.
+  gv_processing_total   = gv_ok + gv_error.
+ENDFORM.                    " DATA_COUNT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  FILL_GT_MATERIALTASKALLOCATION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM fill_gt_materialtaskallocation .
+  gt_materialtaskallocation-material        = gt_data-matnr.
+  gt_materialtaskallocation-plant           = gt_data-werks.
+  gt_materialtaskallocation-task_list_group = gt_data-plnnr.
+  "기존에 그룹번호를 가져간다.
+<font color ="#0000FF">*  GT_MATERIALTASKALLOCATION-GROUP_COUNTER  = GT_DATA-PLNAL."AUTO</font>
+  gt_materialtaskallocation-valid_from     = gt_data-sttag.
+  gt_materialtaskallocation-valid_to_date  = '99991231'.
+<font color ="#0000FF">*  GT_MATERIALTASKALLOCATION-CHANGE_NO      = GT_DATA-AENNR.</font>
+<font color ="#0000FF">*  GT_MATERIALTASKALLOCATION-DEL_IND        = GT_DATA-LOEKZ.</font>
+  APPEND gt_materialtaskallocation.
+
+
+  CLEAR : gv_task_list_group.
+
+ENDFORM.                    " FILL_GT_MATERIALTASKALLOCATION
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  ALV_DOUBLE_CLICK</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PO_SENDER  text</font>
+<font color ="#0000FF">*      --&gt;P_ROW      text</font>
+<font color ="#0000FF">*      --&gt;P_COLUMN   text</font>
+<font color ="#0000FF">*      --&gt;PS_ROW_NO  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM alv_double_click USING    po_sender TYPE REF TO cl_gui_alv_grid
+                               p_row     TYPE lvc_s_row
+                               p_column  TYPE lvc_s_col
+                               ps_row_no TYPE lvc_s_roid.
+  READ TABLE gt_data INDEX ps_row_no-row_id.
+  CASE p_column-fieldname.
+    WHEN 'MATNR'.
+      SET PARAMETER ID 'MAT' FIELD gt_data-matnr.
+      CALL TRANSACTION 'MM03' AND SKIP FIRST SCREEN.
+
+    WHEN 'PLNNR'.
+      SET PARAMETER ID 'MAT' FIELD gt_data-matnr.
+      SET PARAMETER ID 'WRK' FIELD gt_data-werks.
+      SET PARAMETER ID 'PLN' FIELD gt_data-plnnr.
+      SET PARAMETER ID 'STT' FIELD gt_data-sttag.
+      SET PARAMETER ID 'PAL' FIELD gt_data-plnal.
+      CALL TRANSACTION 'CA23' AND SKIP FIRST SCREEN.
+
+  ENDCASE.
+ENDFORM.                    "ALV_DOUBLE_CLICK
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA_DESCRIPTION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LT_DATA  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data_description  TABLES   pt_data STRUCTURE gt_data.
+  "Insert correct name for &lt;...&gt;.
+  DATA :
+    lts_matnr TYPE TABLE OF gy_search WITH HEADER LINE,
+    lts_werks TYPE TABLE OF gy_search WITH HEADER LINE,
+    lt_t001w  TYPE TABLE OF t001w     WITH HEADER LINE,
+    lt_makt   TYPE TABLE OF makt      WITH HEADER LINE.
+
+  CHECK pt_data[] IS NOT INITIAL.
+
+  LOOP AT pt_data.
+    lts_matnr-matnr = pt_data-matnr. COLLECT lts_matnr.
+<font color ="#0000FF">*    LTS_WERKS-WERKS = PT_DATA-WERKS. COLLECT LTS_WERKS.</font>
+  ENDLOOP.
+
+<font color ="#0000FF">*  Material</font>
+  PERFORM get_matnr_desc_table TABLES lts_matnr lt_makt.
+<font color ="#0000FF">* Plant</font>
+<font color ="#0000FF">*  PERFORM GET_WERKS_DESC_TABLE  TABLES LTS_WERKS LT_T001W.</font>
+
+  LOOP AT pt_data.
+    $$read_table pt_data :
+                           matnr maktx lt_makt matnr maktx.
+    "WERKS WERKS_T  LT_T001W WERKS NAME1.
+
+    MODIFY pt_data TRANSPORTING  maktx." WERKS_T .
+  ENDLOOP.
+
+ENDFORM.                    " GET_DATA_DESCRIPTION
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_PLNNR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LT_DATA  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_plnnr  TABLES   pt_data STRUCTURE gt_data.
+  "Insert correct name for &lt;...&gt;.
+  DATA: lt_data LIKE TABLE OF gt_data WITH HEADER LINE.
+  DATA: lt_mapl LIKE TABLE OF mapl WITH HEADER LINE.
+  FIELD-SYMBOLS: &lt;lf_wa&gt; LIKE LINE OF gt_data.
+  lt_data[] = pt_data[].
+  SORT lt_data BY matnr werks .
+  DELETE ADJACENT DUPLICATES FROM lt_data
+  COMPARING matnr werks.
+
+  SELECT matnr werks  plnnr
+    FROM mapl
+    INTO CORRESPONDING FIELDS OF TABLE lt_mapl
+    FOR ALL ENTRIES IN lt_data
+    WHERE matnr = lt_data-matnr
+    AND werks = lt_data-werks
+    AND plnty = 'R'
+    AND loekz &lt;&gt; 'X'.
+  SORT lt_mapl BY matnr werks plnnr DESCENDING.
+  LOOP AT pt_data ASSIGNING &lt;lf_wa&gt;.
+    READ TABLE lt_mapl WITH KEY
+    matnr = &lt;lf_wa&gt;-matnr
+    werks = &lt;lf_wa&gt;-werks.
+    IF sy-subrc = 0.
+      IF &lt;lf_wa&gt;-plnnr IS INITIAL.
+        &lt;lf_wa&gt;-plnnr = lt_mapl-plnnr.
+      ENDIF.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.                    " GET_PLNNR
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHECK_ROUTING</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_GT_DATA_PLNNR  text</font>
+<font color ="#0000FF">*      --&gt;P_GT_DATA_PLNAL  text</font>
+<font color ="#0000FF">*      &lt;--P_LV_EXIT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM check_routing  USING    pv_plnnr
+                             pv_plnal
+                    CHANGING pv_exit.
+  CLEAR pv_exit.
+  DATA: lv_plnnr LIKE plko-plnnr.
+  DATA: lv_plnal LIKE plko-plnal.
+
+  lv_plnnr = pv_plnnr.
+  lv_plnal = pv_plnal.
+  CALL FUNCTION 'CP_CC_S_TSK_EXISTENCE_CHECK'
+    EXPORTING
+      i_plnty        = 'R'
+      i_plnnr        = lv_plnnr
+      i_plnal        = lv_plnal
+    EXCEPTIONS
+      task_not_found = 1
+      OTHERS         = 2.
+  IF sy-subrc = 0.
+    pv_exit = 'X'.
+<font color ="#0000FF">* Implement suitable error handling here</font>
+  ENDIF.
+
+
+
+ENDFORM.                    " CHECK_ROUTING
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_BDC_OPTION</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_bdc_option .
+  CLEAR gv_opt.
+  gv_opt-dismode  =  'N'.
+  gv_opt-updmode  =  'S'.
+  gv_opt-cattmode =  ''.
+  gv_opt-racommit =  'X'.
+  gv_opt-defsize  =  'X'.
+  gv_opt-nobinpt  =  'X'.
+  gv_opt-nobiend  =  ''.
+
+ENDFORM.                    " SET_BDC_OPTION
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHANGE_ROUTING</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM change_routing .
+  DATA: lv_new_plnnr,
+        lv_end_plnnr.
+  DATA: lv_error.
+  DELETE gt_data WHERE check &lt;&gt; 'X'.
+  SORT gt_data BY matnr werks plnnr plnal vornr.
+
+  PERFORM set_bdc_option.
+
+<font color ="#0000FF">*  PERFORM CHECK_PLNAL TABLES GT_DATA USING LV_ERROR.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*-- BEGIN OF  BDC 위한 단위 수정  2015.06.24</font>
+  LOOP AT gt_data WHERE werks = 'SK10'.
+    REPLACE ALL OCCURRENCES OF '.' IN gt_data-vgw01  WITH ','.
+    REPLACE ALL OCCURRENCES OF '.' IN gt_data-vgw02  WITH ','.
+    REPLACE ALL OCCURRENCES OF '.' IN gt_data-vgw03  WITH ','.
+    REPLACE ALL OCCURRENCES OF '.' IN gt_data-vgw04  WITH ','.
+    REPLACE ALL OCCURRENCES OF '.' IN gt_data-vgw05  WITH ','.
+    REPLACE ALL OCCURRENCES OF '.' IN gt_data-vgw06  WITH ','.
+    MODIFY gt_data TRANSPORTING vgw01 vgw02 vgw03 vgw04 vgw05 vgw06 .
+  ENDLOOP.
+<font color ="#0000FF">*-- END OF  BDC 위한 단위 수정  20150624</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  CHECK LV_ERROR IS INITIAL .</font>
+  LOOP AT gt_data.
+    CLEAR: lv_new_plnnr,lv_end_plnnr,gv_matnr.
+    gv_matnr = gt_data-matnr.
+
+    AT NEW plnal.
+      lv_new_plnnr = 'X'.
+      gv_body_flag = 1.
+    ENDAT.
+    AT END OF plnal.
+      lv_end_plnnr = 'X'.
+      gv_index_now = sy-tabix.
+    ENDAT.
+
+    PERFORM execute_change USING lv_new_plnnr lv_end_plnnr.
+  ENDLOOP.
+
+  gv_bapi_done = 'X'.
+
+ENDFORM.                    " CHANGE_ROUTING
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXECUTE_CHANGE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LV_NEW_PLNNR  text</font>
+<font color ="#0000FF">*      --&gt;P_LV_END_PLNNR  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM execute_change  USING    p_new_plnnr
+      p_end_plnnr.
+
+  IF p_new_plnnr IS NOT INITIAL.
+    CLEAR gt_bdcdata[].
+    PERFORM bdc_head.
+  ENDIF.
+  PERFORM bdc_body.
+
+  gv_body_flag = gv_body_flag + 1.
+
+  CHECK p_end_plnnr IS NOT INITIAL.
+
+  PERFORM execute_bdc.
+
+  PERFORM get_result_change.
+
+  gv_index_last = gv_index_now.
+
+  CLEAR : gt_bdcdata, gt_bdcdata[], gt_messtab, gt_messtab[].
+ENDFORM.                    " EXECUTE_CHANGE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_HEAD</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_head .
+  SET PARAMETER ID 'PLN' FIELD '  '.
+  "BENGIN OF APPEND DATE FORMAT 2015.07.17 SK01DV03
+  DATA : lv_date      TYPE sy-datum,
+         lv_datec(10).
+  CLEAR :  lv_date, lv_datec.
+  lv_date = gt_data-sttag.
+  WRITE lv_date TO lv_datec.
+  "END OF APPEND DATE FORMAT 2015.07.17
+  PERFORM dynpro USING :
+        'X'   'SAPLCPDI'  '1010',
+        '  '  'BDC_OKCODE' 'ALD1',
+        '  '  'RC27M-MATNR'  gt_data-matnr,
+        '  '  'RC27M-WERKS'  gt_data-werks,
+        '  '  'RC271-PLNNR'  gt_data-plnnr,
+<font color ="#0000FF">*        '  '  'RC271-STTAG'  GT_DATA-STTAG,</font>
+        '  '  'RC271-STTAG'  lv_datec,
+        "CHANGE DATE FORMAT 2015.07.17 SK01DV03
+        '  '  'RC271-PLNAL'  gt_data-plnal.
+
+ENDFORM.                    " BDC_HEAD
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BDC_BODY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM bdc_body .
+  CONDENSE gv_body_flag.
+
+
+
+  PERFORM dynpro USING :
+        'X'   'SAPLCPDA'      '1200',
+        '  '  'BDC_OKCODE'    '=VOUE',
+        '  '  'PLKOD-KTEXT'   gt_data-ktext,
+        '  '  'PLKOD-WERKS'   gt_data-werks,
+        '  '  'PLKOD-VERWE'   gt_data-verwe,
+        '  '  'PLKOD-STATU'   gt_data-statu,
+        '  '  'PLKOD-LOSVN'   gt_data-losvn,
+        '  '  'PLKOD-LOSBS'   gt_data-losbs,
+        '  '  'PLKOD-PLNME'   gt_data-gmein.
+
+  PERFORM dynpro USING :
+        'X'   'SAPLCPDI'  '5400',
+        '  '  'BDC_OKCODE' '=PICK',
+        '  '  'RC27X-ENTRY_ACT' gv_body_flag.
+
+  PERFORM dynpro USING :
+        'X'   'SAPLCPDO'  '1200',
+        '  '  'BDC_OKCODE' '=BACK',
+        '  '  'PLPOD-VORNR'  gt_data-vornr,"
+        '  '  'PLPOD-ARBPL'  gt_data-arbpl,
+        '  '  'PLPOD-STEUS'  gt_data-steus,"
+        '  '  'PLPOD-LTXA1'  gt_data-ltxa1,
+
+
+        '  '  'PLPOD-BMSCH'  gt_data-bmsch," 기준수량
+        '  '  'PLPOD-MEINH'  gt_data-gmein," 작업단위
+
+        '  '  'PLPOD-UMREZ'  '1',"헤더
+        '  '  'PLPOD-UMREN'  '1',"OPERATION
+
+        '  '  'PLPOD-VGW01'  gt_data-vgw01,   " 액티비1
+<font color ="#0000FF">*        '  '  'PLPOD-VGE01'  C_VGE00,   "액티비1</font>
+<font color ="#0000FF">*        '  '  'PLPOD-LAR01'  C_LAR01,   "액티비1</font>
+
+        '  '  'PLPOD-VGW02'  gt_data-vgw02,   " 액티비2
+<font color ="#0000FF">*        '  '  'PLPOD-VGE02'  C_VGE00,   "액티비2</font>
+<font color ="#0000FF">*        '  '  'PLPOD-LAR02'  C_LAR02,   "액티비2</font>
+
+        '  '  'PLPOD-VGW03'  gt_data-vgw03,   " 액티비3
+<font color ="#0000FF">*        '  '  'PLPOD-VGE03'  C_VGE00,   "액티비3</font>
+<font color ="#0000FF">*        '  '  'PLPOD-LAR03'  C_LAR03,   "액티비3</font>
+
+        '  '  'PLPOD-VGW04'  gt_data-vgw04,   " 액티비4
+<font color ="#0000FF">*        '  '  'PLPOD-VGE04'  C_VGE00,   "액티비4</font>
+<font color ="#0000FF">*        '  '  'PLPOD-LAR04'  C_LAR04,   "액티비4</font>
+
+        '  '  'PLPOD-VGW05'  gt_data-vgw05,   " 액티비5
+<font color ="#0000FF">*        '  '  'PLPOD-VGE05'  C_VGE00,   "액티비5</font>
+<font color ="#0000FF">*        '  '  'PLPOD-LAR05'  C_LAR05,   "액티비5</font>
+
+        '  '  'PLPOD-VGW06'  gt_data-vgw06.   " 액티비6
+<font color ="#0000FF">*        '  '  'PLPOD-VGE06'  C_VGE00.   "액티비6</font>
+<font color ="#0000FF">**        '  '  'PLPOD-LAR06'  C_LAR06.   "액티비6</font>
+
+
+ENDFORM.                    "BDC_BODY
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  EXECUTE_BDC</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM execute_bdc .
+
+  PERFORM dynpro USING :
+        'X'   'SAPLCPDI'  '5400',
+        '  '  'BDC_OKCODE' '=BU'.
+
+  CALL TRANSACTION 'CA22'
+  USING gt_bdcdata
+        MESSAGES INTO gt_messtab
+        OPTIONS FROM gv_opt.
+
+ENDFORM.                    " EXECUTE_BDC
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_RESULT_CHANGE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_result_change .
+
+
+  READ TABLE gt_messtab WITH KEY msgid = 'CV'  msgnr = '765'.
+  IF sy-subrc &lt;&gt; 0.
+    IF gt_messtab[] IS NOT INITIAL."메세지에 값이 있으면 오류.
+      ROLLBACK WORK.
+
+
+      CLEAR : gv_mseg.
+      LOOP AT gt_messtab.
+        CALL FUNCTION 'MESSAGE_TEXT_BUILD' "메세지 읽는다.
+          EXPORTING
+            msgid               = gt_messtab-msgid
+            msgnr               = gt_messtab-msgnr
+            msgv1               = gt_messtab-msgv1
+            msgv2               = gt_messtab-msgv2
+            msgv3               = gt_messtab-msgv3
+            msgv4               = gt_messtab-msgv4
+          IMPORTING
+            message_text_output = gv_mseg.
+
+        CONCATENATE gv_mseg '/' INTO gv_mseg SEPARATED BY space.
+
+      ENDLOOP.
+      gt_data-icon  = icon_red_light.
+      gt_data-msg = gv_mseg.
+
+      MODIFY gt_data FROM gt_data
+      TRANSPORTING icon msg matnr WHERE matnr = gv_matnr
+      AND werks = gt_data-werks
+      AND plnnr = gt_data-plnnr.
+
+      gv_error = gv_error + ( gv_index_now - gv_index_last ). "에러건수 +1
+    ELSE.
+      COMMIT WORK.
+      WAIT UP TO 1 SECONDS.
+      gt_data-icon  = icon_green_light."성공하면 파란불
+      gt_data-msg = TEXT-c30.
+
+      MODIFY gt_data FROM gt_data
+      TRANSPORTING icon msg matnr WHERE matnr = gv_matnr
+      AND werks = gt_data-werks
+      AND plnnr = gt_data-plnnr.
+      gv_ok = gv_ok + ( gv_index_now - gv_index_last ).     "성공건수 + 1
+    ENDIF.
+  ELSE.
+    COMMIT WORK.
+    WAIT UP TO 1 SECONDS.
+
+    gt_data-icon  = icon_green_light."성공하면 파란불
+    gt_data-msg = TEXT-c30.
+
+    MODIFY gt_data FROM gt_data
+    TRANSPORTING icon msg matnr WHERE matnr = gv_matnr
+    AND werks = gt_data-werks
+    AND plnnr = gt_data-plnnr.
+    gv_ok = gv_ok + ( gv_index_now - gv_index_last ).       "성공건수 + 1
+  ENDIF.
+
+
+ENDFORM.                    " GET_RESULT_CHANGE
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  CHECK_PLNAL</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_GT_DATA  text</font>
+<font color ="#0000FF">*      --&gt;P_LV_ERROR  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM check_plnal  TABLES   pt_data STRUCTURE gt_data
+                             "Insert correct name for &lt;...&gt;
+                  USING    pv_error.
+  CLEAR: pv_error.
+  DATA: lv_msg TYPE string.
+  LOOP AT pt_data.
+    CLEAR : lv_msg.
+    IF pt_data-plnal IS INITIAL.
+      pv_error = 'X'.
+      lv_msg = 'Enter Group Counter'.
+      PERFORM get_check_message USING pt_data-msg lv_msg
+      CHANGING pt_data-msg pt_data-icon.
+
+    ENDIF.
+    MODIFY pt_data.
+  ENDLOOP.
+
+  PERFORM alv_cell_style TABLES pt_data.
+
+ENDFORM.                    " CHECK_PLNAL
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* 0100 --&gt; &1</font>
+<font color ="#0000FF">* 0100 --&gt; &1</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* C01 Box</font>
+<font color ="#0000FF">* C02 Light</font>
+<font color ="#0000FF">* C03 Plant</font>
+<font color ="#0000FF">* C04 Material</font>
+<font color ="#0000FF">* C05 Material Description</font>
+<font color ="#0000FF">* C06 Material Type</font>
+<font color ="#0000FF">* C07 Key Date</font>
+<font color ="#0000FF">* C08 Group</font>
+<font color ="#0000FF">* C09 Group Counter</font>
+<font color ="#0000FF">* C10 Task list Description</font>
+<font color ="#0000FF">* C11 Usage</font>
+<font color ="#0000FF">* C12 Status</font>
+<font color ="#0000FF">* C13 From Lot Size</font>
+<font color ="#0000FF">* C14 To Lot Size</font>
+<font color ="#0000FF">* C15 Operation/Activity No.</font>
+<font color ="#0000FF">* C16 Work Center</font>
+<font color ="#0000FF">* C17 Control key</font>
+<font color ="#0000FF">* C18 Standard text key</font>
+<font color ="#0000FF">* C19 Operation Description</font>
+<font color ="#0000FF">* C20 Base Quantity</font>
+<font color ="#0000FF">* C21 Labor#Hour-Dir.#Labor</font>
+<font color ="#0000FF">* C22 Labor#Hour-Other#Per</font>
+<font color ="#0000FF">* C23 Machine#Hour-Machine</font>
+<font color ="#0000FF">* C24 Customer Description</font>
+<font color ="#0000FF">* C25 Machine#Hour-Depreciate</font>
+<font color ="#0000FF">* C26 Mach.#Hour-Dep(mold)</font>
+<font color ="#0000FF">* C27 Error Message</font>
+<font color ="#0000FF">* C28 Unit</font>
+<font color ="#0000FF">* C29 Machine#Hour-Overhead</font>
+<font color ="#0000FF">* C30 Changed</font>
+<font color ="#0000FF">* F01 Template Download</font>
+<font color ="#0000FF">* F02 Routing Maintenance</font>
+<font color ="#0000FF">* M02 Group Counter 01 already exists. Enter Group Counter 02 to create</font>
+<font color ="#0000FF">* M03 You do not have permission to operate & plant maintenance!</font>
+<font color ="#0000FF">* S01 Selection Options</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* P_FNAME D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: 00</font>
+<font color ="#0000FF">*001   &1&2&3&4&5&6&7&8</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: PT_RETURN-ID</font>
+<font color ="#0000FF">*PT_</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Z00CAM</font>
+<font color ="#0000FF">*004</font>
+<font color ="#0000FF">*020</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCAGM</font>
+<font color ="#0000FF">*001   &</font>
+<font color ="#0000FF">*002   & &</font>
+<font color ="#0000FF">*012   Yes</font>
+<font color ="#0000FF">*013   No</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCOEMSG</font>
+<font color ="#0000FF">*002</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZPPGM</font>
+<font color ="#0000FF">*004   Success!</font>
+<font color ="#0000FF">*005   No Data!</font>
+<font color ="#0000FF">*301   Check Obligatory Excel file field except Group & Standard text key</font>
+<font color ="#0000FF">*302   Check Material Code, Plant</font>
+<font color ="#0000FF">*303   Check Work Center</font>
+<font color ="#0000FF">*304   Routing has already been created</font>
+<font color ="#0000FF">*306   Operation '&' is not number format</font>
+<font color ="#0000FF">*307   Select Data.</font>
+<font color ="#0000FF">*308   No Routing.</font>
+<font color ="#0000FF">*309   Deleted</font>
+<font color ="#0000FF">*310   The material & does not exist or is not activated</font>
+<font color ="#0000FF">*311   The Plant & does not exist or is not activated</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: 00</font>
+<font color ="#0000FF">*001   &1&2&3&4&5&6&7&8</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: PT_RETURN-ID</font>
+<font color ="#0000FF">*PT_</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Z00CAM</font>
+<font color ="#0000FF">*004</font>
+<font color ="#0000FF">*020</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCAGM</font>
+<font color ="#0000FF">*001</font>
+<font color ="#0000FF">*002</font>
+<font color ="#0000FF">*012</font>
+<font color ="#0000FF">*013</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCOEMSG</font>
+<font color ="#0000FF">*002</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZPPGM</font>
+<font color ="#0000FF">*004   Success!</font>
+<font color ="#0000FF">*005   No Data!</font>
+<font color ="#0000FF">*301   Check Obligatory Excel file field except Group & Standard text key</font>
+<font color ="#0000FF">*302   Check Material Code, Plant</font>
+<font color ="#0000FF">*303   Check Work Center</font>
+<font color ="#0000FF">*304   Routing has already been created</font>
+<font color ="#0000FF">*306   Operation '&' is not number format</font>
+<font color ="#0000FF">*307   Select Data.</font>
+<font color ="#0000FF">*308   No Routing.</font>
+<font color ="#0000FF">*309   Deleted</font>
+<font color ="#0000FF">*310   The material & does not exist or is not activated</font>
+<font color ="#0000FF">*311   The Plant & does not exist or is not activated</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

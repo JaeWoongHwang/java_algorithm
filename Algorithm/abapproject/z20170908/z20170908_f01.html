@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170908_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170908_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170908_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20170908_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+  CLEAR : gt_data, gt_data[].
+
+<font color ="#0000FF">*  SELECT a~ebeln b~ebelp a~bukrs a~bsart b~matnr</font>
+<font color ="#0000FF">*         c~maktx b~matkl b~menge b~meins b~netwr a~waers</font>
+<font color ="#0000FF">*    INTO CORRESPONDING FIELDS OF TABLE gt_data</font>
+<font color ="#0000FF">*    FROM ekko AS a</font>
+<font color ="#0000FF">*    INNER JOIN ekpo AS b</font>
+<font color ="#0000FF">*    ON a~ebeln = b~ebeln</font>
+<font color ="#0000FF">*    INNER JOIN makt AS c</font>
+<font color ="#0000FF">*    ON b~matnr = c~matnr</font>
+<font color ="#0000FF">*    AND c~spras = 'EN'</font>
+<font color ="#0000FF">*    WHERE : a~ebeln IN s_ebeln,</font>
+<font color ="#0000FF">*            a~bukrs EQ p_bukrs.</font>
+  IF go_handler IS NOT BOUND.
+    CREATE OBJECT go_handler.
+  ENDIF.
+  CALL METHOD go_handler-&gt;read_to_data
+    EXPORTING
+      e_bukrs   = p_bukrs
+      e_ebeln_l = s_ebeln-low
+      e_ebeln_h = s_ebeln-high.
+
+  IF gt_data[] IS INITIAL.
+    MESSAGE s000 WITH 'Data not found'.
+     LEAVE LIST-PROCESSING.
+  ENDIF.
+
+<font color ="#0000FF">*  DATA : lv_index LIKE sy-tabix.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LOOP AT gt_data.</font>
+<font color ="#0000FF">*    lv_index = sy-tabix.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    gt_data-waers = 'KRW'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF sy-tabix &lt;= 10.</font>
+<font color ="#0000FF">*      CLEAR: gs_scol.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      gt_data-color = 'C211' .</font>
+<font color ="#0000FF">*      gs_scol-fname = 'MATNR'.</font>
+<font color ="#0000FF">*      gs_scol-color-col = 3.</font>
+<font color ="#0000FF">*      gs_scol-color-int = 1.</font>
+<font color ="#0000FF">*      gs_scol-color-inv = 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      APPEND gs_scol TO gt_data-cell_color.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      CLEAR: gs_scol.</font>
+<font color ="#0000FF">*      gs_scol-fname = 'MENGE'.</font>
+<font color ="#0000FF">*      gs_scol-color-col = 7.</font>
+<font color ="#0000FF">*      gs_scol-color-int = 1.</font>
+<font color ="#0000FF">*      gs_scol-color-inv = 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      APPEND gs_scol TO gt_data-cell_color.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    MODIFY gt_data INDEX lv_index TRANSPORTING waers color cell_color.</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat USING p_key p_field p_text p_ref_table p_ref_field.
+
+  gs_fcat-key = p_key.
+  gs_fcat-fieldname = p_field.
+  gs_fcat-coltext = p_text.
+  gs_fcat-ref_table = p_ref_table.
+  gs_fcat-ref_field = p_ref_field.
+
+  CASE p_field.
+    WHEN 'MENGE' .
+      gs_fcat-qfieldname = 'MEINS'.
+    WHEN 'NETWR'.
+      gs_fcat-cfieldname = 'WAERS'.
+    WHEN 'BSART' .
+      gs_fcat-emphasize = 'C600'.
+
+  ENDCASE.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR : gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  READ_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_E_BURKS  text</font>
+<font color ="#0000FF">*      --&gt;P_E_EBELN_L  text</font>
+<font color ="#0000FF">*      --&gt;P_E_EBELN_H  text</font>
+<font color ="#0000FF">*      --&gt;P_ENDMETHOD  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM read_data  USING    p_burks
+                         p_ebeln_l
+                         p_ebeln_h.
+
+  RANGES : lr_ebeln FOR ekko-ebeln.
+
+  CLEAR : lr_ebeln, lr_ebeln[].
+
+  IF p_ebeln_l IS NOT INITIAL AND
+     p_ebeln_h IS NOT INITIAL.
+
+    lr_ebeln-sign = 'I'.
+    lr_ebeln-option = 'BT'.
+    lr_ebeln-low = p_ebeln_l.
+    lr_ebeln-high = p_ebeln_h.
+
+    APPEND lr_ebeln.
+    CLEAR  lr_ebeln.
+
+  ELSEIF  p_ebeln_l IS INITIAL AND
+          p_ebeln_h IS NOT INITIAL.
+
+    lr_ebeln-sign = 'I'.
+    lr_ebeln-option = 'BT'.
+    lr_ebeln-high = p_ebeln_h.
+
+    APPEND lr_ebeln.
+    CLEAR  lr_ebeln.
+  ELSEIF p_ebeln_l IS NOT INITIAL AND
+         p_ebeln_h IS INITIAL.
+
+    lr_ebeln-sign = 'I'.
+    lr_ebeln-option = 'EQ'.
+    lr_ebeln-low = p_ebeln_l.
+
+    APPEND lr_ebeln.
+    CLEAR  lr_ebeln.
+  ENDIF.
+
+  SELECT a~ebeln b~ebelp a~bukrs a~bsart b~matnr
+       c~maktx b~matkl b~menge b~meins b~netwr a~waers
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    FROM ekko AS a
+    INNER JOIN ekpo AS b
+       ON a~ebeln = b~ebeln
+    INNER JOIN makt AS c
+       ON b~matnr = c~matnr
+      AND c~spras = 'EN'
+    WHERE a~bukrs EQ p_bukrs
+      AND a~ebeln IN lr_ebeln.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

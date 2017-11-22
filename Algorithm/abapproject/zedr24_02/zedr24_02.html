@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZEDR24_02</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZEDR24_02</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  ALV 프로그램 교육</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report  ZEDR24_02</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zedr24_02_top.html">zedr24_02_top</a>.  " global Data
+
+include <a href ="zedr24_02_scr.html">zedr24_02_scr</a>.  "Selection-screen
+include <a href ="zedr24_02_o01.html">zedr24_02_o01</a>.  "PBO-Modules
+include <a href ="zedr24_02_i01.html">zedr24_02_i01</a>.  "PAI-Modules
+include <a href ="zedr24_02_f01.html">zedr24_02_f01</a>.  "FORM-Routines
+
+
+" INITIALIZATION 프로그램 시작전 사전작업
+" AT SELECXTION-SCREEN OUTPUT 라디오버튼, 체크박스 같은것 변경
+" AT SELECTION-SCREEN ON ~ 엔터때렸으면 여기와서 체크, 보통은 X -&gt; SOF에서 많이함.
+" AT SELECTION-SCREEN ON VALUE REQUEST FOR ~ 도메인X possible entry 띄워주는것 (s,p모두가능)
+" START-OF-SELECTION 프로그램을 시작하는 이벤트 꼭 있어야함 : selection screen 실행 누르자마자 바로 오는곳. 이제진짜 로직 실행하겠다
+" END-OF-SELECTION 쓰지말자.
+
+START-OF-SELECTION.
+  PERFORM get_data.
+  "PERFORM 폼을 불러오는 코드
+
+  " SCREEN을 호출하는 CALL 코드
+  "100번 부터 시작하는 이유? 불문율
+
+   CALL SCREEN '0100'.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* 0100 --&gt; SFLIGHT ALV 교육</font>
+<font color ="#0000FF">* 01육00 --&gt; SFLIGHT ALV 교</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Hard coded</font>
+<font color ="#0000FF">*   Data not found</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

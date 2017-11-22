@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZEDR24_03_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZEDR24_03_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZEDR24_03_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           ZEDR24_03_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+  CLEAR : gt_sflight, gt_sflight[].
+
+  SELECT carrid connid fldate price currency planetype seatsmax
+    seatsocc paymentsum seatsmax_b seatsocc_b seatsmax_f
+    seatsocc_f
+  INTO CORRESPONDING FIELDS OF TABLE gt_sflight
+   FROM sflight
+   WHERE carrid IN s_carrid.
+
+  IF sy-subrc NE 0.
+    MESSAGE 'Data not found' TYPE  'S' DISPLAY LIKE 'E'.
+
+    LEAVE LIST-PROCESSING.
+    "STOP도 가능
+  ENDIF.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat USING p_key p_field p_text p_ref_table p_ref_field.
+
+  gs_fcat-key = p_key.
+  gs_fcat-fieldname = p_field.
+  gs_fcat-coltext = p_text.
+  gs_fcat-ref_table = p_ref_table.
+  gs_fcat-ref_field = p_ref_field.
+
+  CASE  p_field.
+    WHEN 'PRICE'.
+      gs_fcat-cfieldname = 'CURRENCY'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR : gs_fcat.
+
+<font color ="#0000FF">*  gs_fcat-key = 'X'.</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'CONNID'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Flight Number'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-key = 'X'.</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'FLDATE'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Date'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'PRICE'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Airfare'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'CURRENCY'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Airline Currency'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'PLANETYPE'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Plane Type'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'SEATSMAX'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Capacity'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'SEATSOCC'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Occupied'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'PAYMENTSUM'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Total of current bookings'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_fcat-fieldname = 'SEATSMAX_B'.</font>
+<font color ="#0000FF">*  gs_fcat-coltext = 'Capacity'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_fcat TO gt_fcat.</font>
+<font color ="#0000FF">*  CLEAR : gs_fcat.</font>
+
+
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

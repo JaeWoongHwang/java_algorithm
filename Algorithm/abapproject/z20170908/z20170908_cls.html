@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20170908_CLS</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20170908_CLS</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20170908_CLS</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&       Class lcl_data_handler</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*        Text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+CLASS lcl_data_handler DEFINITION.
+  PUBLIC SECTION.
+    METHODS : read_to_data
+      IMPORTING
+        e_bukrs   TYPE ekko-bukrs
+        e_ebeln_l TYPE ekko-ebeln
+        e_ebeln_h TYPE ekko-ebeln.
+
+ENDCLASS.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&       Class (Implementation)  lcl_data_handler</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*        Text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+CLASS lcl_data_handler IMPLEMENTATION.
+  METHOD  read_to_data.
+    PERFORM read_data USING e_bukrs e_ebeln_l e_ebeln_h.
+  ENDMETHOD.
+ENDCLASS.               "lcl_data_handler
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>
