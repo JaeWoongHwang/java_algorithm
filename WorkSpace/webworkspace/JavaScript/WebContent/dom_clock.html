@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>dom_clock</title>
+<style>
+</style>
+<script>
+	window.onload = function() {
+		//변수를 선언
+		var clock = document.getElementById('clock');
+		//1초마다 함수를 실행
+		setInterval(function() {
+			var now = new Date();
+			clock.innerHTML = now.toString();
+		}, 1000);
+	};
+</script>
+</head>
+<body>
+<h1 id = 'clock'></h1>
+</body>
+</html>

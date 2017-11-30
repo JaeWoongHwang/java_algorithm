@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+</style>
+<script>
+var images = [
+	          'images/Chrysanthemum.jpg',
+	          'images/Desert.jpg',
+	          'images/Hydrangeas.jpg',
+	          'images/Jellyfish.jpg',
+	          'images/Koala.jpg',
+	          'images/Lighthouse.jpg',
+	          'images/Penguins.jpg',
+	          'images/Tulips.jpg'
+		]
+	window.onload = function() {
+		var img = document.getElementById('image');
+		var i = 0;
+		setInterval(function() {
+			img.src = image[i%images.length];
+			i++;
+		}, 1000);
+	};
+</script>
+</head>
+<body>
+	<img id="image" width="300">
+</body>
+</html>

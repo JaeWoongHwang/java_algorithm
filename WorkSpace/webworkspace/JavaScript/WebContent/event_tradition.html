@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+</style>
+<script>
+	//이벤트 연결
+	window.onload = function() {
+		//문서객체를 선택
+		var button = document.getElementById('button');
+		//이벤트 연결
+		button.onclick = function() {
+			alert('click');
+		}
+	};
+</script>
+</head>
+<body>	
+	<button id="button">버튼</button>
+</body>
+</html>

@@ -16,12 +16,6 @@
 <font color ="#0000FF">*&</font>
 <font color ="#0000FF">*&</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-<font color ="#0000FF">*& Report ZPPG0030_23</font>
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-<font color ="#0000FF">*&</font>
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 REPORT zppg0030_24 MESSAGE-ID zppgm.
 
 include <a href ="zcag0000_alv.html">zcag0000_alv</a>. " Common ALV
@@ -42,7 +36,6 @@ TYPES : BEGIN OF gy_search,
           arbpl TYPE arbpl,
 
         END OF gy_search.
-
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
 <font color ="#0000FF">* Constants</font>
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
@@ -79,6 +72,7 @@ DATA: gv_excel_success      LIKE sy-tabix,
       gv_processing_success TYPE sy-tabix,
       gv_processing_fail    TYPE sy-tabix,
       gv_processing_total   TYPE sy-tabix.
+
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
 <font color ="#0000FF">* IT & STRUCTURE</font>
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
@@ -258,7 +252,6 @@ MODULE pbo_0100 OUTPUT.
              'GT_DATA'
              ''.
 
-
 ENDMODULE.                 " PBO_0100  OUTPUT
 
 
@@ -377,7 +370,7 @@ FORM alv_grid_init USING po_grid TYPE REF TO cl_gui_alv_grid
 <font color ="#0000FF">*   gs_layout-cwidth_opt = 'X'.    "Column Width 최적화 사용여부</font>
   gs_layout-no_rowmark = ' '.
   gs_layout-sel_mode   = 'D'.    "Row 선택유형
-<font color ="#0000FF">*   GS_LAYOUT-ZEBRA      = 'X'.</font>
+  gs_layout-zebra      = 'X'.
 
 
   gs_layout-no_totline = space.
@@ -2801,6 +2794,11 @@ ENDFORM.                    " CHECK_PLNAL
 <font color ="#0000FF">*311   The Plant & does not exist or is not activated</font>
 
 
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* P_FNAME D       .</font>
+
+
 <font color ="#0000FF">*Messages</font>
 <font color ="#0000FF">*----------------------------------------------------------</font>
 <font color ="#0000FF">*</font>
@@ -2813,15 +2811,6 @@ ENDFORM.                    " CHECK_PLNAL
 <font color ="#0000FF">* Message class: Z00CAM</font>
 <font color ="#0000FF">*004</font>
 <font color ="#0000FF">*020</font>
-<font color ="#0000FF">*</font>
-<font color ="#0000FF">* Message class: ZCAGM</font>
-<font color ="#0000FF">*001</font>
-<font color ="#0000FF">*002</font>
-<font color ="#0000FF">*012</font>
-<font color ="#0000FF">*013</font>
-<font color ="#0000FF">*</font>
-<font color ="#0000FF">* Message class: ZCOEMSG</font>
-<font color ="#0000FF">*002</font>
 <font color ="#0000FF">*</font>
 <font color ="#0000FF">* Message class: ZPPGM</font>
 <font color ="#0000FF">*004   Success!</font>

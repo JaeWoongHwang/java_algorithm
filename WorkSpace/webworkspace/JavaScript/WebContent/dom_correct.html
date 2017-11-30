@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+	window.onload = function() {
+		//h1태그의 배경 색상을 변경
+		var h1 = document.querySelector('h1');
+		var h1Style = h1.style;
+		h1Style.backgroundColor = 'red';
+		h1Style.color = 'gold';
+		h1Style.fontStyle = 'italic';
+		//document.querySelector('h1').style.backgroundColor = 'red'; 와 같은 의미
+
+		//h2태그의 글자 색상을 변경
+		var h2 = document.querySelector('h2');
+		h2.style.color = 'red';
+		h2.style.backgroundColor = 'black';
+	};
+</script>
+<meta charset="UTF-8">
+<title>Document Object Model</title>
+<style>
+</style>
+</head>
+<body>
+	<h1>Process - 1-1</h1>
+	<h1>Process - 1-2</h1>
+	<h2>Process - 2-1</h2>
+	<h2>Process - 2-2</h2>
+</body>
+</html>

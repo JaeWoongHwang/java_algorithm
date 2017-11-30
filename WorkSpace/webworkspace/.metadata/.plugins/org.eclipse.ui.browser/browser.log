@@ -1,0 +1,3 @@
+
+6월 01, 2017 15:10:34.30 NEW SESSION
+6월 01, 2017 15:10:34.30 [3684:5344:0601/151034.292:ERROR:audio_manager_base.cc(264)] Invalid audio output parameters received; using fake audio path. Channels: 0, Sample Rate: 0, Bits Per Sample: 0, Frames Per Buffer: 0

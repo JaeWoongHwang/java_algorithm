@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;JavaScript/WebContent/select_query.html&apos;" deleteContents="false" description="Delete resource &apos;JavaScript/WebContent/select_query.html&apos;" element1="/JavaScript/WebContent/select_query.html" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1496376896928"/>
+</session>

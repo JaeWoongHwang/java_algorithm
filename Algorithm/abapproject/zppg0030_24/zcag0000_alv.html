@@ -139,17 +139,11 @@
    PRIVATE SECTION.      "이 부분에 Private Attributes와 Method를 선언한다.
 
  ENDCLASS. "LCL_EVENT_RECEIVER DEFINITION
-
-
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
 <font color ="#0000FF">*       CLASS lcl_event_receiver IMPLEMENTATION</font>
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
 <font color ="#0000FF">*</font>
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
-
-
-
-
  CLASS LCL_EVENT_RECEIVER IMPLEMENTATION.
    METHOD HANDLE_DATA_CHANGED.
      PERFORM ALV_DATA_CHANGED IN PROGRAM (SY-REPID) IF FOUND USING
@@ -527,7 +521,7 @@ ES_SUBTOTTXT_INFO
    REFRESH : GT_INDEX_ROWS, GT_ROW_NO.
 
    "선택된 Row들의 정보를 추출한다.
-   CALL METHOD PV_GRID-&gt;GET_SELECTED_ROWS
+   CALL METHOD pv_grid-&gt;GET_SELECTED_ROWS
      IMPORTING
        ET_INDEX_ROWS = GT_INDEX_ROWS
        ET_ROW_NO     = GT_ROW_NO.
@@ -935,7 +929,7 @@ ES_SUBTOTTXT_INFO
           C_REFRESH(1) VALUE 'X'.
 
    "변경 확인 및 DATA_CHANGED 이벤트 발생
-   CALL METHOD PV_GRID-&gt;CHECK_CHANGED_DATA
+   CALL METHOD pv_GRID-&gt;CHECK_CHANGED_DATA
      IMPORTING
        E_VALID   = E_VALID
      CHANGING
@@ -953,14 +947,14 @@ ES_SUBTOTTXT_INFO
 
 
 
-
- FORM ALV_INIT_SETTING.
-   CLEAR GS_VARIANTE.
-   GV_VARIANT-REPORT   = G_REPID = SY-REPID.
-   GV_VARIANT-USERNAME = SY-UNAME.
-
-   GV_VARIANT-handle    = 1.
- ENDFORM. "P1000_ALV_SETTING
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* FORM ALV_INIT_SETTING.</font>
+<font color ="#0000FF">*   CLEAR GS_VARIANTE.</font>
+<font color ="#0000FF">*   GV_VARIANT-REPORT   = G_REPID = SY-REPID.</font>
+<font color ="#0000FF">*   GV_VARIANT-USERNAME = SY-UNAME.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*   GV_VARIANT-handle    = 1.</font>
+<font color ="#0000FF">* ENDFORM. "P1000_ALV_SETTING</font>
 
 
 
@@ -975,7 +969,7 @@ ES_SUBTOTTXT_INFO
 
 
  FORM ALV_VARIANT_DEFAULT USING PV_VARIA.
-   GS_DEF_VARIANT = GV_VARIANT.
+   GS_DEF_VARIANT = GS_VARIANTE.  "수정 전 GS_DEF_VARIANT = GS_VARIANT.
    IF NOT PV_VARIA IS INITIAL.
      GS_DEF_VARIANT-VARIANT = PV_VARIA.
    ENDIF.
@@ -1022,7 +1016,7 @@ ES_SUBTOTTXT_INFO
 
    CALL FUNCTION 'LVC_VARIANT_F4'
      EXPORTING
-       IS_VARIANT    = GV_VARIANT
+       IS_VARIANT    = PV_VARIANT
        I_SAVE        = 'A'
      IMPORTING
        E_EXIT        = GV_VARIANT_EXIT

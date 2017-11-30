@@ -10,205 +10,205 @@
 <hr>
 <pre width="100">
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-<font color ="#0000FF">*& Include ZPPR0541_24_TOP                                   Report ZPPR0541_24</font>
+<font color ="#0000FF">*& Include ZPPR0541_24_01_TOP                                Report ZPPR0541_04_01</font>
 <font color ="#0000FF">*&</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-TABLES : pbim,sscrfields,rlgrap,t001w.
-DATA l_name(40).
-DATA : BEGIN OF gt_itab OCCURS 0,
+TABLES : PBIM,SSCRFIELDS,RLGRAP,T001W.
+DATA L_NAME(40).
+DATA : BEGIN OF GT_ITAB OCCURS 0,
 <font color ="#0000FF">*       G_BOX(1),</font>
-         g_icon(4),
-         versb          LIKE pbim-versb,
-         matnr          LIKE mara-matnr,
-         maktx          LIKE makt-maktx,
-         mtart          LIKE mara-mtart,
-         matkl          LIKE mara-matkl,
-         lvorm          LIKE marc-lvorm,
-         mmsta          LIKE marc-mmsta,
-         filed1         LIKE mseg-menge,
-         filed2         LIKE mseg-menge,
-         filed3         LIKE mseg-menge,
-         filed4         LIKE mseg-menge,
-         filed5         LIKE mseg-menge,
-         filed6         LIKE mseg-menge,
-         filed7         LIKE mseg-menge,
-         filed8         LIKE mseg-menge,
-         filed9         LIKE mseg-menge,
-         filed10        LIKE mseg-menge,
-         filed11        LIKE mseg-menge,
-         filed12        LIKE mseg-menge,
-         filed13        LIKE mseg-menge,
-         filed14        LIKE mseg-menge,
-         filed15        LIKE mseg-menge,
-         filed16        LIKE mseg-menge,
-         filed17        LIKE mseg-menge,
-         filed18        LIKE mseg-menge,
-         filed19        LIKE mseg-menge,
-         filed20        LIKE mseg-menge,
-         filed21        LIKE mseg-menge,
-         filed22        LIKE mseg-menge,
-         filed23        LIKE mseg-menge,
-         filed24        LIKE mseg-menge,
-         filed25        LIKE mseg-menge,
-         filed26        LIKE mseg-menge,
-         filed27        LIKE mseg-menge,
-         filed28        LIKE mseg-menge,
-         filed29        LIKE mseg-menge,
-         filed30        LIKE mseg-menge,
-         total          LIKE mseg-menge,
-         g_type(1),
-         bdc_type(1),
-         g_message(200),
-         field_style    TYPE lvc_t_styl,
-       END OF gt_itab .
+       G_ICON(4),
+       VERSB   LIKE PBIM-VERSB,
+       MATNR   LIKE MARA-MATNR,
+       MAKTX   LIKE MAKT-MAKTX,
+       MTART   LIKE MARA-MTART,
+       MATKL   LIKE MARA-MATKL,
+       LVORM   LIKE MARC-LVORM,
+       MMSTA   LIKE MARC-MMSTA,
+       FILED1  LIKE MSEG-MENGE,
+       FILED2  LIKE MSEG-MENGE,
+       FILED3  LIKE MSEG-MENGE,
+       FILED4  LIKE MSEG-MENGE,
+       FILED5  LIKE MSEG-MENGE,
+       FILED6  LIKE MSEG-MENGE,
+       FILED7  LIKE MSEG-MENGE,
+       FILED8  LIKE MSEG-MENGE,
+       FILED9  LIKE MSEG-MENGE,
+       FILED10  LIKE MSEG-MENGE,
+       FILED11  LIKE MSEG-MENGE,
+       FILED12  LIKE MSEG-MENGE,
+       FILED13  LIKE MSEG-MENGE,
+       FILED14  LIKE MSEG-MENGE,
+       FILED15  LIKE MSEG-MENGE,
+       FILED16  LIKE MSEG-MENGE,
+       FILED17  LIKE MSEG-MENGE,
+       FILED18  LIKE MSEG-MENGE,
+       FILED19  LIKE MSEG-MENGE,
+       FILED20  LIKE MSEG-MENGE,
+       FILED21  LIKE MSEG-MENGE,
+       FILED22  LIKE MSEG-MENGE,
+       FILED23  LIKE MSEG-MENGE,
+       FILED24  LIKE MSEG-MENGE,
+       FILED25  LIKE MSEG-MENGE,
+       FILED26  LIKE MSEG-MENGE,
+       FILED27  LIKE MSEG-MENGE,
+       FILED28  LIKE MSEG-MENGE,
+       FILED29  LIKE MSEG-MENGE,
+       FILED30  LIKE MSEG-MENGE,
+       TOTAL    LIKE MSEG-MENGE,
+       G_TYPE(1),
+       BDC_TYPE(1),
+       G_MESSAGE(200),
+       FIELD_STYLE  TYPE LVC_T_STYL,
+       END OF GT_ITAB .
 
-DATA : gs_itab LIKE gt_itab.
+DATA : GS_ITAB LIKE GT_ITAB.
 
-DATA : BEGIN OF gt_temp OCCURS 0,
-         g_icon       LIKE icon-name,
-         versb        LIKE pbim-versb,
-         pbdnr        LIKE pbim-pbdnr,
-         matnr        LIKE pbim-matnr,
-         maktx        LIKE makt-maktx,
-         mtart        LIKE mara-mtart,
-         matkl        LIKE mara-matkl,
-         message(200),
-       END OF gt_temp.
+DATA : BEGIN OF GT_TEMP OCCURS 0,
+  G_ICON LIKE ICON-NAME,
+  VERSB LIKE PBIM-VERSB,
+  PBDNR LIKE PBIM-PBDNR,
+  MATNR LIKE PBIM-MATNR,
+  MAKTX LIKE MAKT-MAKTX,
+  MTART LIKE MARA-MTART,
+  MATKL LIKE MARA-MATKL,
+  MESSAGE(200),
+  END OF GT_TEMP.
 
-DATA : BEGIN OF gt_list OCCURS 0.
-    INCLUDE STRUCTURE gt_temp.
+DATA : BEGIN OF GT_LIST OCCURS 0.
+        INCLUDE STRUCTURE GT_TEMP.
 DATA:
-  celltab TYPE lvc_t_styl,
-  zmark.
-DATA : END OF gt_list.
+      CELLTAB TYPE LVC_T_STYL,
+      ZMARK.
+DATA : END OF GT_LIST.
 
-DATA : gs_list LIKE gt_list.
+DATA : GS_LIST LIKE GT_LIST.
 
-DATA : BEGIN OF gt_excel OCCURS 0,
-         versb          LIKE pbim-versb,
-         matnr          LIKE mara-matnr,
-         maktx          LIKE makt-maktx,
-         m1             LIKE mseg-menge,
-         m2             LIKE mseg-menge,
-         m3             LIKE mseg-menge,
-         m4             LIKE mseg-menge,
-         m5             LIKE mseg-menge,
-         m6             LIKE mseg-menge,
-         m7             LIKE mseg-menge,
-         m8             LIKE mseg-menge,
-         m9             LIKE mseg-menge,
-         m10            LIKE mseg-menge,
-         m11            LIKE mseg-menge,
-         m12            LIKE mseg-menge,
-         g_type(1),
-         g_message(200),
-       END OF gt_excel.
+DATA : BEGIN OF GT_EXCEL OCCURS 0,
+       VERSB  LIKE PBIM-VERSB,
+       MATNR  LIKE MARA-MATNR,
+       MAKTX  LIKE MAKT-MAKTX,
+       M1     LIKE MSEG-MENGE,
+       M2     LIKE MSEG-MENGE,
+       M3     LIKE MSEG-MENGE,
+       M4     LIKE MSEG-MENGE,
+       M5     LIKE MSEG-MENGE,
+       M6     LIKE MSEG-MENGE,
+       M7     LIKE MSEG-MENGE,
+       M8     LIKE MSEG-MENGE,
+       M9     LIKE MSEG-MENGE,
+       M10    LIKE MSEG-MENGE,
+       M11    LIKE MSEG-MENGE,
+       M12    LIKE MSEG-MENGE,
+       G_TYPE(1),
+       G_MESSAGE(200),
+       END OF GT_EXCEL.
 
-DATA: BEGIN OF month_upload OCCURS 0,
-        filed1(20) TYPE c,
-        filed2(18) TYPE c,
-        filed3(20) TYPE c,
-        filed4(20) TYPE c,
-        filed5(20) TYPE c,
-        filed6(20) TYPE c,
-        filed7(20) TYPE c,
-        filed8(20) TYPE c,
-      END OF month_upload.
+DATA: BEGIN OF MONTH_UPLOAD OCCURS 0,
+    FILED1(20) TYPE C,
+    FILED2(18) TYPE C,
+    FILED3(20) TYPE C,
+    FILED4(20) TYPE C,
+    FILED5(20) TYPE C,
+    FILED6(20) TYPE C,
+    FILED7(20) TYPE C,
+    FILED8(20) TYPE C,
+    END OF MONTH_UPLOAD.
 
-DATA: BEGIN OF year_upload OCCURS 0,
-        filed1(20)  TYPE c,
-        filed2(18)  TYPE c,
-        filed3(20)  TYPE c,
-        filed4(20)  TYPE c,
-        filed5(20)  TYPE c,
-        filed6(20)  TYPE c,
-        filed7(20)  TYPE c,
-        filed8(20)  TYPE c,
-        filed9(20)  TYPE c,
-        filed10(20) TYPE c,
-        filed11(20) TYPE c,
-        filed12(20) TYPE c,
-        filed13(20) TYPE c,
-        filed14(20) TYPE c,
-        filed15(20) TYPE c,
-      END OF year_upload.
+DATA: BEGIN OF YEAR_UPLOAD OCCURS 0,
+      FILED1(20)  TYPE C,
+      FILED2(18)  TYPE C,
+      FILED3(20)  TYPE C,
+      FILED4(20)  TYPE C,
+      FILED5(20)  TYPE C,
+      FILED6(20)  TYPE C,
+      FILED7(20)  TYPE C,
+      FILED8(20)  TYPE C,
+      FILED9(20)  TYPE C,
+      FILED10(20) TYPE C,
+      FILED11(20) TYPE C,
+      FILED12(20) TYPE C,
+      FILED13(20) TYPE C,
+      FILED14(20) TYPE C,
+      FILED15(20) TYPE C,
+  END OF YEAR_UPLOAD.
 
-DATA : BEGIN OF gt_mara OCCURS 0,
-         matnr LIKE mara-matnr,
-         matkl LIKE mara-matkl,
-         mtart LIKE mara-mtart,
-         lvorm LIKE marc-lvorm,
-         mmsta LIKE marc-mmsta,
-       END OF gt_mara.
+DATA : BEGIN OF GT_MARA OCCURS 0,
+        MATNR LIKE MARA-MATNR,
+        MATKL LIKE MARA-MATKL,
+        MTART LIKE MARA-MTART,
+        LVORM LIKE MARC-LVORM,
+        MMSTA LIKE MARC-MMSTA,
+       END OF GT_MARA.
 
-DATA : BEGIN OF gt_mast OCCURS 0,
-         matnr LIKE mast-matnr,
-         werks LIKE mast-werks,
-         stlan LIKE mast-stlan,
-         stlnr LIKE mast-stlnr,
-         stlal LIKE mast-stlal,
-       END OF gt_mast.
+DATA : BEGIN OF GT_MAST OCCURS 0,
+        MATNR LIKE MAST-MATNR,
+        WERKS LIKE MAST-WERKS,
+        STLAN LIKE MAST-STLAN,
+        STLNR LIKE MAST-STLNR,
+        STLAL LIKE MAST-STLAL,
+       END OF GT_MAST.
 
-DATA : BEGIN OF gt_mapl OCCURS 0,
-         matnr LIKE mapl-matnr,
-         werks LIKE mapl-werks,
-         plnty LIKE mapl-plnty,
-         plnnr LIKE mapl-plnnr,
-         plnal LIKE mapl-plnal,
-         zkriz LIKE mapl-zkriz,
-         zaehl LIKE mapl-zaehl,
-       END OF gt_mapl.
+DATA : BEGIN OF GT_MAPL OCCURS 0,
+        MATNR LIKE MAPL-MATNR,
+        WERKS LIKE MAPL-WERKS,
+        PLNTY LIKE MAPL-PLNTY,
+        PLNNR LIKE MAPL-PLNNR,
+        PLNAL LIKE MAPL-PLNAL,
+        ZKRIZ LIKE MAPL-ZKRIZ,
+        ZAEHL LIKE MAPL-ZAEHL,
+       END OF GT_MAPL.
 
-DATA : BEGIN OF gt_mkal OCCURS 0,
-         matnr LIKE mkal-matnr,
-         werks LIKE mkal-werks,
-         verid LIKE mkal-verid,
-       END OF gt_mkal.
+DATA : BEGIN OF GT_MKAL OCCURS 0,
+        MATNR LIKE MKAL-MATNR,
+        WERKS LIKE MKAL-WERKS,
+        VERID LIKE MKAL-VERID,
+       END OF GT_MKAL.
 
-DATA : BEGIN OF gt_makt OCCURS 0,
-         matnr LIKE makt-matnr,
-         maktx LIKE makt-maktx,
-       END OF gt_makt.
+DATA : BEGIN OF GT_MAKT OCCURS 0,
+        MATNR LIKE MAKT-MATNR,
+        MAKTX LIKE MAKT-MAKTX,
+       END OF GT_MAKT.
 
-DATA : BEGIN OF m_date OCCURS 5,
-         m_low  LIKE sy-datum,
-         m_high LIKE sy-datum,
-         sum    LIKE vtbbewe-atage,
-       END OF m_date.
+DATA : BEGIN OF M_DATE OCCURS 5,
+       M_LOW    LIKE SY-DATUM,
+       M_HIGH   LIKE SY-DATUM,
+       SUM      LIKE VTBBEWE-ATAGE,
+       END OF M_DATE.
 
-DATA : BEGIN OF m_day OCCURS 0,
-         day      LIKE sy-datum,
-         day1     LIKE sy-datum,
-         daynr    LIKE hrvsched-daynr,
-         type(01),
-         week(10),
-         sum(02)  TYPE i,
-       END OF  m_day.
+DATA : BEGIN OF M_DAY OCCURS 0,
+       DAY      LIKE SY-DATUM,
+       DAY1     LIKE SY-DATUM,
+       DAYNR    LIKE HRVSCHED-DAYNR,
+       TYPE(01),
+       WEEK(10),
+       SUM(02)  TYPE I,
+       END OF  M_DAY.
 
-DATA : BEGIN OF gt_sum OCCURS 0,
-         day1    LIKE sy-datum,
-         sum(02) TYPE i,
-       END OF gt_sum.
+DATA : BEGIN OF GT_SUM OCCURS 0,
+       DAY1     LIKE SY-DATUM,
+       SUM(02)  TYPE I,
+       END OF GT_SUM.
 
-DATA : BEGIN OF y_date OCCURS 0,
-         month(07),
-         day       LIKE sy-datum,
-       END OF y_date.
+DATA : BEGIN OF Y_DATE OCCURS 0,
+       MONTH(07),
+       DAY   LIKE SY-DATUM,
+       END OF Y_DATE.
 
-DATA : p_date LIKE sy-datum.
+DATA : P_DATE LIKE SY-DATUM.
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*& ########</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 
-DATA : p_pltgb LIKE zppt026_04-pltgb.
-DATA : p_pltch LIKE zppt026_04-pltch.
+DATA : P_PLTGB LIKE ZPPT026_04-PLTGB.
+DATA : P_PLTCH LIKE ZPPT026_04-PLTCH.
 
-RANGES : gr_mtart FOR mara-mtart.
-RANGES : gr_versb FOR pbim-versb.
-RANGES : gr_pdatu FOR pbed-pdatu.
+RANGES : GR_MTART FOR MARA-MTART.
+RANGES : GR_VERSB FOR PBIM-VERSB.
+RANGES : GR_PDATU FOR PBED-PDATU.
 
-DATA : g_lines TYPE i.
-DATA : g_count TYPE i.
+DATA : G_LINES TYPE I.
+DATA : G_COUNT TYPE I.
 
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
 <font color ="#0000FF">*  Macro                                                              *</font>
@@ -216,19 +216,19 @@ DATA : g_count TYPE i.
 <font color ="#0000FF">* Ranges Macro</font>
 
 
-DEFINE %%range_set.
+DEFINE %%RANGE_SET.
   IF &2 IS INITIAL AND &3 IS INITIAL.
   ELSEIF NOT &2 IS INITIAL AND &3 IS INITIAL.
-    CLEAR : &1-high.
-    MOVE: 'I'    TO &1-sign,
-          'EQ'   TO &1-option,
-          &2     TO &1-low.
+    CLEAR : &1-HIGH.
+    MOVE: 'I'    TO &1-SIGN,
+          'EQ'   TO &1-OPTION,
+          &2     TO &1-LOW.
     APPEND &1    TO &1.
   ELSE.
-    MOVE: 'I'    TO &1-sign,
-          'BT'   TO &1-option,
-           &2    TO &1-low,
-           &3    TO &1-high.
+    MOVE: 'I'    TO &1-SIGN,
+          'BT'   TO &1-OPTION,
+           &2    TO &1-LOW,
+           &3    TO &1-HIGH.
     APPEND &1    TO &1 .
   ENDIF.
 END-OF-DEFINITION.
@@ -236,149 +236,149 @@ END-OF-DEFINITION.
 <font color ="#0000FF">*&  F4 ######  ##                                              *</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*-- DATA</font>
-DATA : g_subrc(1).
+DATA : G_SUBRC(1).
 
-DATA :l_dynpfld LIKE help_info-dynprofld,
-      l_dynprog LIKE sy-repid,
-      l_dynnr   LIKE sy-dynnr,
-      l_retfild LIKE dfies-fieldname,
-      lt_fields TYPE TABLE OF dfies,
-      ls_field  TYPE dfies.
+DATA :L_DYNPFLD LIKE HELP_INFO-DYNPROFLD,
+      L_DYNPROG LIKE SY-REPID,
+      L_DYNNR   LIKE SY-DYNNR,
+      L_RETFILD LIKE DFIES-FIELDNAME,
+      LT_FIELDS TYPE TABLE OF DFIES,
+      LS_FIELD  TYPE DFIES.
 
-DATA: BEGIN OF mf_dynpfields OCCURS 1.
-    INCLUDE STRUCTURE dynpread.
-DATA: END OF mf_dynpfields.
+DATA: BEGIN OF MF_DYNPFIELDS OCCURS 1.
+        INCLUDE STRUCTURE DYNPREAD.
+DATA: END OF MF_DYNPFIELDS.
 
-DATA: mf_returncode LIKE sy-subrc,
-      mf_monat      LIKE isellist-month,
-      mf_hlp_repid  LIKE sy-repid.
+DATA: MF_RETURNCODE LIKE SY-SUBRC,
+      MF_MONAT        LIKE ISELLIST-MONTH,
+      MF_HLP_REPID    LIKE SY-REPID.
 <font color ="#0000FF">*---Display Header</font>
-DATA : gs1(9) TYPE n,
-       gs2(9) TYPE n,
-       gs3(9) TYPE n,
-       gs4(9) TYPE n,
-       gs5(9) TYPE n,
-       gs6(9) TYPE n.
+DATA : GS1(9) TYPE N,
+       GS2(9) TYPE N,
+       GS3(9) TYPE N,
+       GS4(9) TYPE N,
+       GS5(9) TYPE N,
+       GS6(9) TYPE N.
 
-DATA : g_werks(4).
-DATA : g_name1 LIKE t001w-name1.
-DATA : g_date LIKE sy-datum.
-DATA : text1(42).
-DATA : name1(49).
-DATA : text2(13).
-DATA : low1(30).
-DATA : p_namber(40).
+DATA : G_WERKS(4).
+DATA : G_NAME1 LIKE T001W-NAME1.
+DATA : G_DATE LIKE SY-DATUM.
+DATA : TEXT1(42).
+DATA : NAME1(49).
+DATA : TEXT2(13).
+DATA : LOW1(30).
+DATA : P_NAMBER(40).
 
 <font color ="#0000FF">*---BDC DATA</font>
-DATA : BEGIN OF bdc_tab OCCURS 0.
-    INCLUDE STRUCTURE bdcdata.
-DATA : END OF bdc_tab.
+DATA : BEGIN OF BDC_TAB OCCURS 0.
+        INCLUDE STRUCTURE BDCDATA.
+DATA : END OF BDC_TAB.
 
-DATA : BEGIN OF gt_message OCCURS 0.
-    INCLUDE STRUCTURE bdcmsgcoll.
-DATA : END OF gt_message.
+DATA : BEGIN OF GT_MESSAGE OCCURS 0.
+        INCLUDE STRUCTURE BDCMSGCOLL.
+DATA : END OF GT_MESSAGE.
 
-DATA : s_date LIKE sy-datum.
-DATA : e_date LIKE sy-datum.
-DATA : versb-low LIKE pbim-versb.
-DATA : versb-high LIKE pbim-versb.
+DATA : S_DATE LIKE SY-DATUM.
+DATA : E_DATE LIKE SY-DATUM.
+DATA : VERSB-LOW LIKE PBIM-VERSB.
+DATA : VERSB-HIGH LIKE PBIM-VERSB.
 <font color ="#0000FF">* GUI Stats</font>
-DATA : BEGIN OF gt_menutab OCCURS 10,
-         fcode LIKE sy-ucomm,
-       END OF gt_menutab.
+DATA : BEGIN OF GT_MENUTAB OCCURS 10,
+         FCODE LIKE SY-UCOMM,
+       END OF GT_MENUTAB.
 
 <font color ="#0000FF">*---CLASS ALV DATA</font>
-DATA : g_container          TYPE scrfname VALUE 'ALV_GRID_CONTAINER',
-       g_docking_container  TYPE REF TO cl_gui_docking_container,
-       g_docking_container2 TYPE REF TO cl_gui_docking_container,
-       g_docking_container3 TYPE REF TO cl_gui_docking_container,
-       g_custom_container   TYPE REF TO cl_gui_custom_container,
-       g_top_of_page        TYPE REF TO cl_gui_container,
-       g_grid               TYPE REF TO cl_gui_alv_grid,
-       g_grid2              TYPE REF TO cl_gui_alv_grid,
-       g_s_layout           TYPE lvc_s_layo,
-       gs_variant           TYPE disvariant,
-       g_t_fieldcat         TYPE lvc_t_fcat,
-       g_t_fieldcat2        TYPE lvc_t_fcat,
-       gs_fieldcat          TYPE lvc_s_fcat,
-       gt_sort              TYPE lvc_t_sort,
-       gt_sort2             TYPE lvc_t_sort,
-       gs_sort              TYPE lvc_s_sort,
-       document             TYPE REF TO cl_dd_document,
-       splitter             TYPE REF TO cl_gui_splitter_container,
-       html_control         TYPE REF TO cl_gui_html_viewer,
-       parent1              TYPE REF TO cl_gui_container,
-       parent2              TYPE REF TO cl_gui_container,
-       gt_toolbar_excluding TYPE ui_functions.
+DATA : G_CONTAINER TYPE SCRFNAME VALUE 'ALV_GRID_CONTAINER',
+       G_DOCKING_CONTAINER TYPE REF TO CL_GUI_DOCKING_CONTAINER,
+       G_DOCKING_CONTAINER2 TYPE REF TO CL_GUI_DOCKING_CONTAINER,
+       G_DOCKING_CONTAINER3 TYPE REF TO CL_GUI_DOCKING_CONTAINER,
+       G_CUSTOM_CONTAINER   TYPE REF TO CL_GUI_CUSTOM_CONTAINER,
+       G_TOP_OF_PAGE   TYPE REF TO CL_GUI_CONTAINER,
+       G_GRID               TYPE REF TO CL_GUI_ALV_GRID,
+       G_GRID2               TYPE REF TO CL_GUI_ALV_GRID,
+       G_S_LAYOUT           TYPE LVC_S_LAYO,
+       GS_VARIANT           TYPE DISVARIANT,
+       G_T_FIELDCAT         TYPE LVC_T_FCAT,
+       G_T_FIELDCAT2        TYPE LVC_T_FCAT,
+       GS_FIELDCAT          TYPE LVC_S_FCAT,
+       GT_SORT              TYPE LVC_T_SORT,
+       GT_SORT2             TYPE LVC_T_SORT,
+       GS_SORT              TYPE LVC_S_SORT,
+       DOCUMENT           TYPE REF TO CL_DD_DOCUMENT,
+       SPLITTER         TYPE REF TO CL_GUI_SPLITTER_CONTAINER,
+       HTML_CONTROL     TYPE REF TO CL_GUI_HTML_VIEWER,
+       PARENT1         TYPE REF TO CL_GUI_CONTAINER,
+       PARENT2         TYPE REF TO CL_GUI_CONTAINER,
+       GT_TOOLBAR_EXCLUDING TYPE UI_FUNCTIONS.
 
-DATA: l_spos   TYPE i,
-      l_no     TYPE i,
-      l_answer.
-DATA : ls_sort TYPE lvc_s_sort.
-DATA : ok_code LIKE sy-ucomm.
-DATA : save_code LIKE sy-ucomm.
-DATA :it_row  TYPE lvc_t_row,
-      it_roid TYPE lvc_t_roid,
-      wa_roid LIKE LINE OF it_roid.
+DATA: L_SPOS TYPE I,
+      L_NO   TYPE I,
+      L_ANSWER.
+DATA : LS_SORT TYPE LVC_S_SORT.
+DATA : OK_CODE LIKE SY-UCOMM.
+DATA : SAVE_CODE LIKE SY-UCOMM.
+DATA :IT_ROW TYPE LVC_T_ROW,
+      IT_ROID TYPE LVC_T_ROID,
+      WA_ROID LIKE LINE OF IT_ROID.
 
-DATA: BEGIN OF gs_parm,
-        ttext        LIKE tstct-ttext,
-        tcode        LIKE sy-tcode,
-        userid       TYPE uname,
-        modify,
-        error,
-        cursor_field TYPE scrfname,
-        changed,
-        first,
-        rows         TYPE numc4,
-        ok,
-        save,
-        sel_parm,         "selection screen parmeter check
+ DATA: BEGIN OF GS_PARM,
+         TTEXT        LIKE TSTCT-TTEXT,
+         TCODE        LIKE SY-TCODE,
+         USERID       TYPE UNAME,
+         MODIFY,
+         ERROR,
+         CURSOR_FIELD TYPE SCRFNAME,
+         CHANGED,
+         FIRST,
+         ROWS         TYPE NUMC4,
+         OK,
+         SAVE,
+         SEL_PARM,         "selection screen parmeter check
 
-      END OF gs_parm.
+       END OF GS_PARM.
 
-DEFINE __add_gap.
-  CALL METHOD o_document-&gt;add_gap
+DEFINE __ADD_GAP.
+  CALL METHOD O_DOCUMENT-&gt;ADD_GAP
     EXPORTING
-      width = &1.
+      WIDTH = &1.
 END-OF-DEFINITION.
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*& CLASS DECLARATIONS</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-CLASS lcl_event_receiver DEFINITION DEFERRED.
-DATA : event_receiver TYPE REF TO lcl_event_receiver.
+CLASS LCL_EVENT_RECEIVER DEFINITION DEFERRED.
+DATA : EVENT_RECEIVER TYPE REF TO LCL_EVENT_RECEIVER.
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*&       Class LCL_EVENT_RECEIVER</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*        Text</font>
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
-CLASS lcl_event_receiver DEFINITION.
+CLASS LCL_EVENT_RECEIVER DEFINITION.
   PUBLIC SECTION .
     METHODS:
-      handle_toolbar
-                    FOR EVENT toolbar OF cl_gui_alv_grid
-        IMPORTING sender e_object e_interactive,
+    HANDLE_TOOLBAR
+        FOR EVENT TOOLBAR OF CL_GUI_ALV_GRID
+            IMPORTING SENDER E_OBJECT E_INTERACTIVE,
 
-      handle_data_changed
-                    FOR EVENT data_changed OF cl_gui_alv_grid
-        IMPORTING sender er_data_changed ,
+    HANDLE_DATA_CHANGED
+        FOR EVENT DATA_CHANGED OF CL_GUI_ALV_GRID
+            IMPORTING SENDER ER_DATA_CHANGED ,
 
-      handle_user_command
-                    FOR EVENT user_command OF cl_gui_alv_grid
-        IMPORTING e_ucomm ,
+    HANDLE_USER_COMMAND
+        FOR EVENT USER_COMMAND OF CL_GUI_ALV_GRID
+            IMPORTING E_UCOMM ,
 
-      handle_double_click
-                    FOR EVENT double_click OF cl_gui_alv_grid
-        IMPORTING sender e_row e_column,
+    HANDLE_DOUBLE_CLICK
+        FOR EVENT DOUBLE_CLICK OF CL_GUI_ALV_GRID
+            IMPORTING SENDER E_ROW E_COLUMN,
 
-      handle_top_of_page
-                    FOR EVENT top_of_page OF cl_gui_alv_grid
-        IMPORTING e_dyndoc_id,
+    HANDLE_TOP_OF_PAGE
+         FOR EVENT TOP_OF_PAGE OF CL_GUI_ALV_GRID
+         IMPORTING E_DYNDOC_ID,
 
 
-      handle_close
-                    FOR EVENT close OF cl_gui_dialogbox_container
-        IMPORTING sender.
+    HANDLE_CLOSE
+        FOR EVENT CLOSE OF CL_GUI_DIALOGBOX_CONTAINER
+            IMPORTING SENDER.
 
 ENDCLASS. "
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
@@ -386,86 +386,86 @@ ENDCLASS. "
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*        Text</font>
 <font color ="#0000FF">*----------------------------------------------------------------------*</font>
-CLASS lcl_event_receiver IMPLEMENTATION.
+CLASS LCL_EVENT_RECEIVER IMPLEMENTATION.
 <font color ="#0000FF">*--Handle Toolbar</font>
-  METHOD handle_toolbar.
-    PERFORM handle_toolbar USING sender e_object e_interactive .
+  METHOD HANDLE_TOOLBAR.
+    PERFORM HANDLE_TOOLBAR USING SENDER E_OBJECT E_INTERACTIVE .
   ENDMETHOD .                    "handle_toolbar
 
 <font color ="#0000FF">*--Handle Data Changed</font>
-  METHOD handle_data_changed .
-    PERFORM handle_data_changed USING sender er_data_changed .
+  METHOD HANDLE_DATA_CHANGED .
+    PERFORM HANDLE_DATA_CHANGED USING SENDER ER_DATA_CHANGED .
   ENDMETHOD.                    "handle_data_changed
 
-  METHOD handle_top_of_page.
-    PERFORM event_top_of_page USING   e_dyndoc_id.
+  METHOD HANDLE_TOP_OF_PAGE.
+    PERFORM EVENT_TOP_OF_PAGE USING   E_DYNDOC_ID.
   ENDMETHOD.                    "handle_TOP_OF_PAGE
 
 <font color ="#0000FF">*--Handle User Command</font>
-  METHOD handle_user_command .
-    PERFORM handle_user_command USING e_ucomm .
+  METHOD HANDLE_USER_COMMAND .
+    PERFORM HANDLE_USER_COMMAND USING E_UCOMM .
   ENDMETHOD.                    "handle_user_command
 
-  METHOD handle_double_click.
-    CLEAR : gt_itab, gs_itab.
-    READ TABLE gt_itab INDEX e_row-index INTO gs_itab.
-    IF sy-subrc = 0.
-      PERFORM call_transactions_md63.
+  METHOD HANDLE_DOUBLE_CLICK.
+    CLEAR : GT_ITAB, GS_ITAB.
+    READ TABLE GT_ITAB INDEX E_ROW-INDEX INTO GS_ITAB.
+    IF SY-SUBRC = 0.
+      PERFORM CALL_TRANSACTIONS_MD63.
     ENDIF.
   ENDMETHOD.                    "handle_double_click
 
-  METHOD handle_close.
-    CALL METHOD sender-&gt;set_visible
+  METHOD HANDLE_CLOSE.
+    CALL METHOD SENDER-&gt;SET_VISIBLE
       EXPORTING
-        visible = space.
+        VISIBLE = SPACE.
   ENDMETHOD.                    "HANDLE_CLOSE
 ENDCLASS. "LCL_EVENT_RECEIVER IMPLEMENTATION
 <font color ="#0000FF">*&---------------------------------------------------------------------</font>
 <font color ="#0000FF">* SELECT-OPTIONS / PARAMETERS                                          *</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------</font>
-SELECTION-SCREEN BEGIN OF BLOCK s1 WITH FRAME TITLE TEXT-002.
+SELECTION-SCREEN BEGIN OF BLOCK S1 WITH FRAME TITLE TEXT-002.
 SELECTION-SCREEN BEGIN OF LINE.
 SELECTION-SCREEN COMMENT (31) TEXT-002.
-PARAMETERS: p_rad1 RADIOBUTTON GROUP ga1 USER-COMMAND p01.
+PARAMETERS: P_RAD1 RADIOBUTTON GROUP GA1 USER-COMMAND P01.
 SELECTION-SCREEN COMMENT 36(25) TEXT-003.
-PARAMETERS: p_rad2 RADIOBUTTON GROUP ga1 DEFAULT 'X'.
+PARAMETERS: P_RAD2 RADIOBUTTON GROUP GA1 DEFAULT 'X'.
 SELECTION-SCREEN COMMENT 65(20) TEXT-004.
 SELECTION-SCREEN END OF LINE.
-SELECTION-SCREEN END OF BLOCK s1.
+SELECTION-SCREEN END OF BLOCK S1.
 
-SELECTION-SCREEN BEGIN OF BLOCK s3 WITH FRAME TITLE TEXT-032.
+SELECTION-SCREEN BEGIN OF BLOCK S3 WITH FRAME TITLE TEXT-032.
 SELECTION-SCREEN BEGIN OF LINE.
 SELECTION-SCREEN COMMENT (31) TEXT-032.
-PARAMETERS: p_rad3 RADIOBUTTON GROUP ga2 USER-COMMAND p02.
+PARAMETERS: P_RAD3 RADIOBUTTON GROUP GA2 USER-COMMAND P02.
 SELECTION-SCREEN COMMENT 36(25) TEXT-033.
-PARAMETERS: p_rad4 RADIOBUTTON GROUP ga2 DEFAULT 'X'.
+PARAMETERS: P_RAD4 RADIOBUTTON GROUP GA2 DEFAULT 'X'.
 SELECTION-SCREEN COMMENT 65(20) TEXT-034.
 SELECTION-SCREEN END OF LINE.
-SELECTION-SCREEN END OF BLOCK s3.
+SELECTION-SCREEN END OF BLOCK S3.
 
-SELECTION-SCREEN BEGIN OF BLOCK s2 WITH FRAME TITLE TEXT-001.
+SELECTION-SCREEN BEGIN OF BLOCK S2 WITH FRAME TITLE TEXT-001.
 
-PARAMETERS: p_year LIKE mseg-mjahr MODIF ID y1.
+PARAMETERS: P_YEAR LIKE MSEG-MJAHR MODIF ID Y1.
 
-PARAMETERS: p_month LIKE zsdt2052_04-zmont MODIF ID m1.
+PARAMETERS: P_MONTH LIKE ZSDT2052_04-ZMONT MODIF ID M1.
 
-PARAMETERS: p_pbdnr LIKE pbim-pbdnr.
+PARAMETERS: P_PBDNR LIKE PBIM-PBDNR.
 
 SELECTION-SCREEN SKIP 1.
 
-SELECT-OPTIONS : s_werks FOR t001w-werks
+SELECT-OPTIONS : S_WERKS FOR T001W-WERKS
                  OBLIGATORY NO-EXTENSION
-                 NO INTERVALS MEMORY ID wrk.
+                 NO INTERVALS MEMORY ID WRK.
 
 SELECTION-SCREEN SKIP 1.
 
-PARAMETERS : p_file LIKE rlgrap-filename
+PARAMETERS : P_FILE LIKE RLGRAP-FILENAME
              OBLIGATORY DEFAULT TEXT-008.
 SELECTION-SCREEN SKIP 1.
-PARAMETER: p_c1 AS CHECKBOX DEFAULT 'X'.
-SELECTION-SCREEN END OF BLOCK s2.
+PARAMETER: P_C1 AS CHECKBOX DEFAULT 'X'.
+SELECTION-SCREEN END OF BLOCK S2.
 
-SELECTION-SCREEN BEGIN OF BLOCK b4 WITH FRAME.
+SELECTION-SCREEN BEGIN OF BLOCK B4 WITH FRAME.
 
 SELECTION-SCREEN COMMENT 1(70) TEXT-041.
 SELECTION-SCREEN SKIP.
@@ -477,7 +477,7 @@ SELECTION-SCREEN COMMENT 1(70) TEXT-044.
 SELECTION-SCREEN SKIP.
 SELECTION-SCREEN COMMENT 1(70) TEXT-045.
 
-SELECTION-SCREEN END OF BLOCK b4.
+SELECTION-SCREEN END OF BLOCK B4.
 
 SELECTION-SCREEN FUNCTION KEY 1.
 </pre>

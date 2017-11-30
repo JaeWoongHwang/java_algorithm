@@ -17,12 +17,24 @@
 <font color ="#0000FF">*&</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 
-REPORT ZPPR05401_04_24 NO STANDARD PAGE HEADING MESSAGE-ID ZPPM1.
+REPORT zppr05401_04_24 NO STANDARD PAGE HEADING MESSAGE-ID zppm1.
 
 include <a href ="zppr0541_24_top.html">zppr0541_24_top</a>.    " global Data
 include <a href ="zppr0541_24_o01.html">zppr0541_24_o01</a>.  " PBO-Modules
 <font color ="#0000FF">*INCLUDE zppr0541_24_i01                         .  " PAI-Modules</font>
 include <a href ="zppr0541_24_f01.html">zppr0541_24_f01</a>.  " FORM-Routines
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& START-OF-SELECTION.</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+START-OF-SELECTION.
+
+  PERFORM checking_data CHANGING gs_parm-error.
+  CHECK gs_parm-error IS INITIAL.
+
+  CHECK g_subrc &lt;&gt; 'E'.
+  PERFORM get_excel_data.
+  PERFORM date_check.
+  PERFORM process_data.
 
 <font color ="#0000FF">*Text elements</font>
 <font color ="#0000FF">*----------------------------------------------------------</font>
@@ -56,6 +68,13 @@ include <a href ="zppr0541_24_f01.html">zppr0541_24_f01</a>.  " FORM-Routines
 <font color ="#0000FF">* 030 Check Reqmts Plan (Format: Y____)!</font>
 <font color ="#0000FF">* 031 Check Reqmts Plan (Format: M____)!</font>
 <font color ="#0000FF">* 032 Material Type</font>
+<font color ="#0000FF">* 033 FERT/FERM(FINISH-Product)</font>
+<font color ="#0000FF">* 034 HALB(Semi-Product)</font>
+<font color ="#0000FF">* 041 Naming Rule of requirement plan key</font>
+<font color ="#0000FF">* 042 1. Case : Create Yearly PIR</font>
+<font color ="#0000FF">* 043        'Y'+ Year + Serial(2) // Ex : Y201201, Y201301, Y201302...</font>
+<font color ="#0000FF">* 044 2. Case : Create Monthly PIR</font>
+<font color ="#0000FF">* 045        'M'+ Year + Month + Serial(2) // Ex : M20120901,M20120902</font>
 
 
 <font color ="#0000FF">*Selection texts</font>

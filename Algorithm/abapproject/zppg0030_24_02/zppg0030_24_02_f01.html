@@ -1,0 +1,643 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZPPG0030_24_02_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZPPG0030_24_02_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZPPG0030_24_02_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           ZPPG0030_24_02_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">**BOM EXPL</font>
+DATA : BEGIN OF gs_bom_expl,
+         ftrel LIKE   csdata-xfeld,
+         alekz LIKE   csdata-xfeld,
+         altvo LIKE   csdata-xfeld,
+         aufsw LIKE   csdata-xfeld,
+         aumgb LIKE   csdata-xfeld,
+         aumng LIKE   stko-bmeng,
+         auskz LIKE   csdata-xfeld,
+         amind LIKE   csdata-xfeld,
+         bagrp LIKE   mara-matnr,
+         beikz LIKE   stpo-beikz,
+         bessl LIKE   csdata-xfeld,
+         bgixo LIKE   csdata-xfeld,
+         brems LIKE   csdata-xfeld,
+         capid LIKE   tc04-capid,
+         chlst LIKE   csdata-xfeld,
+         cospr LIKE   csdata-xfeld,
+         cuobj LIKE   marc-cuobj,
+         cuovs TYPE   ibversion,
+         cuols LIKE   csdata-xfeld,
+         datuv LIKE   stko-datuv,
+         delnl LIKE   csdata-xfeld,
+         drldt LIKE   csdata-xfeld,
+         ehndl LIKE   csdata-xfeld,
+         emeng LIKE   stko-bmeng,
+         erskz LIKE   stpo-erskz,
+         erssl LIKE   csdata-xfeld,
+         fbstp LIKE   csdata-xfeld,
+         knfba LIKE   csdata-xfeld,
+         ksbvo LIKE   csdata-xfeld,
+         mbwls LIKE   csdata-xfeld,
+         mktls LIKE   csdata-xfeld,
+         mdmps LIKE   csdata-xfeld,
+         mehrs LIKE   csdata-xfeld,
+         mkmat LIKE   csdata-xfeld,
+         mmaps LIKE   csdata-xfeld,
+         salww LIKE   csdata-xfeld,
+         splww LIKE   csdata-xfeld,
+         mmory LIKE   csdata-xfeld,
+         mtnrv LIKE   mara-matnr,
+
+
+         nlink LIKE   csdata-xfeld,
+         postp LIKE   stpo-postp,
+         rndkz LIKE   csdata-xfeld,
+         rvrel LIKE   stpo-rvrel,
+         sanfr LIKE   stpo-sanfe,
+         sanin LIKE   stpo-sanin,
+         sanka LIKE   stpo-sanka,
+         sanko LIKE   stpo-sanko,
+         sanvs LIKE   stpo-sanvs,
+         schgt LIKE   stpo-schgt,
+         stkkz LIKE   stpo-stkkz,
+         stlal LIKE   stko-stlal,
+         stlan LIKE   stzu-stlan,
+         stpst LIKE   stpox-stufe,
+         svwvo LIKE   csdata-xfeld,
+         werks LIKE   marc-werks,
+         norvl LIKE   csdata-xfeld,
+         mdnot LIKE   csdata-xfeld,
+         panot LIKE   csdata-xfeld,
+         qverw LIKE   tmq2-usequ,
+         verid LIKE   mkal-verid,
+         vrsvo LIKE   csdata-xfeld,
+
+       END OF gs_bom_expl.
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">* Common Macro</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+DEFINE $append_selection_table.
+  &1-selname = &3.
+  &1-kind    = &4.
+  &1-sign    = &5.
+  &1-option  = &6.
+  &1-low     = &7.
+  &1-high    = &8.
+  APPEND &1 TO &2.
+END-OF-DEFINITION.
+DEFINE $set_alv_edit_mode.
+  CALL METHOD &1-&gt;set_ready_for_input( &2 ).
+END-OF-DEFINITION.
+DEFINE $edit_mask.
+  CASE &3.
+    WHEN 'D'. "DATE
+      WRITE &1 USING EDIT MASK '____/__/__' TO &2.
+    WHEN 'T'. "TIME
+      WRITE &1 USING EDIT MASK '__:__:__' TO &2.
+
+  ENDCASE.
+END-OF-DEFINITION.
+DEFINE $set_style.
+  CLEAR: gs_celltab.
+  CASE &2.
+    WHEN  'X'.
+      gs_celltab-style = cl_gui_alv_grid=&gt;mc_style_disabled.
+      gs_celltab-fieldname = &1.        "
+
+    WHEN OTHERS.
+      gs_celltab-style = cl_gui_alv_grid=&gt;mc_style_enabled.
+      gs_celltab-fieldname = &1.
+  ENDCASE.
+  INSERT gs_celltab INTO TABLE &lt;gf_celltab&gt;.
+
+END-OF-DEFINITION.
+
+DEFINE $assign_field_value.
+
+  ASSIGN (&1) TO &lt;gf_field&gt;.
+  &lt;gf_field&gt; = &2.
+
+END-OF-DEFINITION.
+DEFINE $set_default.
+
+  gv_col_pos = gv_col_pos + 1.
+
+  gs_fieldcat-col_pos    = gv_col_pos.
+  gs_fieldcat-fieldname  = &1.
+  gs_fieldcat-reptext    = &2.
+  gs_fieldcat-scrtext_l  = &2.
+  gs_fieldcat-scrtext_m  = &2.
+  gs_fieldcat-scrtext_s  = &2.
+  APPEND gs_fieldcat TO fieldcat.
+
+END-OF-DEFINITION.
+
+DEFINE $set_fieldtext.
+  &1+0(4) = &2+0(4).
+  &1+5(2) = &2+4(2).
+END-OF-DEFINITION.
+
+DEFINE $set_fieldtext_date.
+  &1+0(2) = &2+4(2).
+  &1+3(2) = &2+6(2).
+END-OF-DEFINITION.
+
+DEFINE $set_edit.
+  gs_fieldcat-edit =  'X'.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING edit WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+DEFINE $set_col_opt.
+  gs_fieldcat-col_opt =  'X'.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING col_opt WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+
+DEFINE $set_key.
+  gs_fieldcat-key =  'X'.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING key WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+
+DEFINE $set_do_sum.
+  gs_fieldcat-do_sum =  'X'.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING do_sum WHERE
+  fieldname = &1.
+
+END-OF-DEFINITION.
+DEFINE $set_emphasize.
+  gs_fieldcat-emphasize =  &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING emphasize WHERE
+  fieldname = &1.
+
+END-OF-DEFINITION.
+
+DEFINE $set_no_out.
+  gs_fieldcat-no_out =  'X'.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING no_out WHERE
+  fieldname = &1.
+
+END-OF-DEFINITION.
+DEFINE $set_no_zero.
+  gs_fieldcat-no_zero =  'X'.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING no_zero WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+DEFINE $set_just.
+  gs_fieldcat-just = &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING just WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+DEFINE $append_exclude."
+  APPEND cl_gui_alv_grid=&gt;&1 TO gt_toolbar.
+END-OF-DEFINITION.
+DEFINE $set_outlen.
+  gs_fieldcat-outputlen = &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING outputlen WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+DEFINE $set_ref_field.
+  gs_fieldcat-ref_field =  &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING ref_field WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+
+DEFINE  $set_ref_table.
+  gs_fieldcat-ref_table =  &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING ref_table WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+DEFINE  $set_qfieldname.
+  gs_fieldcat-qfieldname =  &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING qfieldname WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+DEFINE  $set_cfieldname.
+  gs_fieldcat-cfieldname =  &2.
+  MODIFY fieldcat FROM gs_fieldcat TRANSPORTING cfieldname WHERE
+  fieldname = &1.
+END-OF-DEFINITION.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_WERKS_DESC</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PV_IN      text</font>
+<font color ="#0000FF">*      --&gt;PV_OUT     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_werks_desc USING pv_in CHANGING pv_out.
+  CLEAR : pv_out.
+  SELECT SINGLE name1
+     INTO pv_out
+     FROM t001w
+    WHERE werks EQ pv_in.
+ENDFORM.                    "GET_WERKS_DESC
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_WERKS_DESC_TABLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PT_IN      text</font>
+<font color ="#0000FF">*      --&gt;PT_OUT     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_werks_desc_table TABLES pt_in pt_out.
+  DATA : lt_in  TYPE TABLE OF t001w WITH HEADER LINE,
+         lt_out TYPE TABLE OF t001w WITH HEADER LINE.
+
+  CHECK pt_in[] IS NOT INITIAL.
+  LOOP AT pt_in.
+    MOVE-CORRESPONDING pt_in TO lt_in.
+    APPEND lt_in.
+  ENDLOOP.
+
+  SELECT werks name1
+     INTO CORRESPONDING FIELDS OF TABLE lt_out
+     FROM t001w
+      FOR ALL ENTRIES IN lt_in
+    WHERE werks EQ lt_in-werks.
+
+  SORT lt_out BY werks.
+  REFRESH : pt_out.
+  LOOP AT lt_out.
+    CLEAR : pt_out.
+    MOVE-CORRESPONDING lt_out TO pt_out.
+    APPEND pt_out.
+  ENDLOOP.
+ENDFORM.                    "GET_WERKS_DESC_TABLE
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_MATNR_DESC</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PV_IN      text</font>
+<font color ="#0000FF">*      --&gt;PV_OUT     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_matnr_desc USING pv_in CHANGING pv_out.
+  CLEAR : pv_out.
+  SELECT SINGLE maktx
+    INTO pv_out
+    FROM makt
+   WHERE matnr EQ pv_in
+     AND spras EQ sy-langu.
+
+ENDFORM. "get_matnr_desc
+
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  get_matnr_desc_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PT_IN      text</font>
+<font color ="#0000FF">*      --&gt;PT_OUT     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_matnr_desc_table TABLES pt_in pt_out.
+  DATA : lt_in  TYPE TABLE OF makt WITH HEADER LINE,
+         lt_out TYPE TABLE OF makt WITH HEADER LINE.
+
+  CHECK pt_in[] IS NOT INITIAL.
+  LOOP AT pt_in.
+    MOVE-CORRESPONDING pt_in TO lt_in.
+    APPEND lt_in.
+  ENDLOOP.
+
+  SELECT matnr maktx
+     INTO CORRESPONDING FIELDS OF TABLE lt_out
+     FROM makt
+      FOR ALL ENTRIES IN lt_in
+    WHERE matnr EQ lt_in-matnr
+      AND spras EQ sy-langu.
+
+  SORT lt_out BY matnr.
+  REFRESH : pt_out.
+  LOOP AT lt_out.
+    CLEAR : pt_out.
+    MOVE-CORRESPONDING lt_out TO pt_out.
+    APPEND pt_out.
+  ENDLOOP.
+ENDFORM.                    "get_matnr_desc_table
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  get_kunnr_desc</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PV_IN      text</font>
+<font color ="#0000FF">*      --&gt;PV_OUT     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_kunnr_desc USING pv_in CHANGING pv_out.
+  CLEAR : pv_out.
+  SELECT SINGLE name1
+    INTO pv_out
+    FROM kna1
+   WHERE kunnr EQ pv_in.
+ENDFORM. "get_kunnr_desc
+
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  get_kunnr_desc_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;PT_IN      text</font>
+<font color ="#0000FF">*      --&gt;PT_OUT     text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_kunnr_desc_table TABLES pt_in pt_out.
+  DATA : lt_in  TYPE TABLE OF kna1 WITH HEADER LINE,
+         lt_out TYPE TABLE OF kna1 WITH HEADER LINE.
+
+  CHECK pt_in[] IS NOT INITIAL.
+  LOOP AT pt_in.
+    MOVE-CORRESPONDING pt_in TO lt_in.
+    APPEND lt_in.
+  ENDLOOP.
+
+  SELECT kunnr name1
+     INTO CORRESPONDING FIELDS OF TABLE lt_out
+     FROM kna1
+      FOR ALL ENTRIES IN lt_in
+    WHERE kunnr EQ lt_in-kunnr.
+
+  SORT lt_out BY kunnr.
+  REFRESH : pt_out.
+  LOOP AT lt_out.
+    CLEAR : pt_out.
+    MOVE-CORRESPONDING lt_out TO pt_out.
+    APPEND pt_out.
+  ENDLOOP.
+ENDFORM. "get_kunnr_desc_table
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  BOM_EXPL_MAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM bom_expl_mat TABLES pt_stb STRUCTURE stpox
+                         pt_matcat STRUCTURE cscmat
+                   USING  ps_bom_expl LIKE gs_bom_expl.
+
+
+  CALL FUNCTION 'CS_BOM_EXPL_MAT_V2'
+    EXPORTING
+      ftrel                 = ps_bom_expl-ftrel
+      alekz                 = ps_bom_expl-alekz
+      altvo                 = ps_bom_expl-altvo
+      aufsw                 = ps_bom_expl-aufsw
+      aumgb                 = ps_bom_expl-aumgb
+      aumng                 = ps_bom_expl-aumng
+      auskz                 = ps_bom_expl-auskz
+      amind                 = ps_bom_expl-amind
+      bagrp                 = ps_bom_expl-bagrp
+      beikz                 = ps_bom_expl-beikz
+      bessl                 = ps_bom_expl-bessl
+      bgixo                 = ps_bom_expl-bgixo
+      brems                 = ps_bom_expl-brems
+      capid                 = ps_bom_expl-capid
+      chlst                 = ps_bom_expl-chlst
+      cospr                 = ps_bom_expl-cospr
+      cuobj                 = ps_bom_expl-cuobj
+      cuovs                 = ps_bom_expl-cuovs
+      cuols                 = ps_bom_expl-cuols
+      datuv                 = ps_bom_expl-datuv
+      delnl                 = ps_bom_expl-delnl
+      drldt                 = ps_bom_expl-drldt
+      ehndl                 = ps_bom_expl-ehndl
+      emeng                 = ps_bom_expl-emeng
+      erskz                 = ps_bom_expl-erskz
+      erssl                 = ps_bom_expl-erssl
+      fbstp                 = ps_bom_expl-fbstp
+      knfba                 = ps_bom_expl-knfba
+      ksbvo                 = ps_bom_expl-ksbvo
+      mbwls                 = ps_bom_expl-mbwls
+      mktls                 = ps_bom_expl-mktls
+      mdmps                 = ps_bom_expl-mdmps
+      mehrs                 = ps_bom_expl-mehrs
+      mkmat                 = ps_bom_expl-mkmat
+      mmaps                 = ps_bom_expl-mmaps
+      salww                 = ps_bom_expl-salww
+      splww                 = ps_bom_expl-splww
+      mmory                 = ps_bom_expl-mmory
+      mtnrv                 = ps_bom_expl-mtnrv
+      nlink                 = ps_bom_expl-nlink
+      postp                 = ps_bom_expl-postp
+      rndkz                 = ps_bom_expl-rndkz
+      rvrel                 = ps_bom_expl-rvrel
+      sanfr                 = ps_bom_expl-sanfr
+      sanin                 = ps_bom_expl-sanin
+      sanka                 = ps_bom_expl-sanka
+      sanko                 = ps_bom_expl-sanko
+      sanvs                 = ps_bom_expl-sanvs
+      schgt                 = ps_bom_expl-schgt
+      stkkz                 = ps_bom_expl-stkkz
+      stlal                 = ps_bom_expl-stlal
+      stlan                 = ps_bom_expl-stlan
+      stpst                 = ps_bom_expl-stpst
+      svwvo                 = ps_bom_expl-svwvo
+      werks                 = ps_bom_expl-werks
+      norvl                 = ps_bom_expl-norvl
+      mdnot                 = ps_bom_expl-mdnot
+      panot                 = ps_bom_expl-panot
+      qverw                 = ps_bom_expl-qverw
+      verid                 = ps_bom_expl-verid
+      vrsvo                 = ps_bom_expl-vrsvo
+    TABLES
+      stb                   = pt_stb
+      matcat                = pt_matcat
+    EXCEPTIONS
+      alt_not_found         = 1
+      call_invalid          = 2
+      material_not_found    = 3
+      missing_authorization = 4
+      no_bom_found          = 5
+      no_plant_data         = 6
+      no_suitable_bom_found = 7
+      conversion_error      = 8
+      OTHERS                = 9.
+
+
+
+
+ENDFORM.                    " BOM_EXPL_MAT
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_ARBPL_DESC_TABLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LTS_ARBPL  text</font>
+<font color ="#0000FF">*      --&gt;P_LT_KTEXT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_arbpl_desc_table  TABLES  pt_in pt_out.
+  DATA: BEGIN OF lt_in OCCURS 0,
+          arbpl LIKE crhd-arbpl,
+          ktext LIKE crtx-ktext,
+        END OF lt_in.
+
+  DATA : lt_out LIKE TABLE OF lt_in WITH HEADER LINE.
+
+  CHECK pt_in[] IS NOT INITIAL.
+  LOOP AT pt_in.
+    MOVE-CORRESPONDING pt_in TO lt_in.
+    APPEND lt_in.
+  ENDLOOP.
+  SELECT  a~ktext  b~arbpl
+       INTO CORRESPONDING FIELDS OF TABLE lt_out
+        FROM ( crtx AS a  INNER JOIN crhd AS b
+                       ON a~objid = b~objid )
+        FOR ALL ENTRIES IN lt_in
+        WHERE  b~arbpl EQ lt_in-arbpl
+        AND  a~spras = sy-langu.
+
+  SORT lt_out BY arbpl.
+  REFRESH : pt_out.
+  LOOP AT lt_out.
+    CLEAR : pt_out.
+    MOVE-CORRESPONDING lt_out TO pt_out.
+    APPEND pt_out.
+  ENDLOOP.
+ENDFORM.                    " GET_ARBPL_DESC_TABLE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_IDNRK_DESC_TABLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LTS_IDNRK  text</font>
+<font color ="#0000FF">*      --&gt;P_LT_MAKT  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_idnrk_desc_table  TABLES pt_in pt_out.
+
+  DATA: BEGIN OF lt_in OCCURS 0,
+          idnrk LIKE stpo-idnrk,
+          maktx LIKE makt-maktx,
+        END OF lt_in.
+  DATA: lt_out LIKE TABLE OF lt_in WITH HEADER LINE.
+
+  CHECK pt_in[] IS NOT INITIAL.
+  LOOP AT pt_in.
+    MOVE-CORRESPONDING pt_in TO lt_in.
+    APPEND lt_in.
+  ENDLOOP.
+
+  SELECT matnr AS idnrk maktx
+     INTO CORRESPONDING FIELDS OF TABLE lt_out
+     FROM makt
+      FOR ALL ENTRIES IN lt_in
+    WHERE matnr EQ lt_in-idnrk
+      AND spras EQ sy-langu.
+
+  SORT lt_out BY idnrk.
+  REFRESH : pt_out.
+  LOOP AT lt_out.
+    CLEAR : pt_out.
+    MOVE-CORRESPONDING lt_out TO pt_out.
+    APPEND pt_out.
+  ENDLOOP.
+
+ENDFORM.                    " GET_IDNRK_DESC_TABLE
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  MAKE_MESSAGE_TABLE_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LT_RETURN  text</font>
+<font color ="#0000FF">*      &lt;--P_LV_MSG  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM make_message_table_1 TABLES    pt_return STRUCTURE bapiret1
+                          CHANGING    pv_message.
+  DATA : lv_message(128).
+  CLEAR : lv_message.
+  LOOP AT pt_return.
+    MESSAGE ID     pt_return-id
+            TYPE   pt_return-type
+            NUMBER pt_return-number
+            WITH   pt_return-message_v1
+                   pt_return-message_v2
+                   pt_return-message_v3
+                   pt_return-message_v4
+            INTO   lv_message.
+    IF pv_message IS INITIAL.
+      pv_message = lv_message.
+    ELSE.
+      CONCATENATE pv_message lv_message INTO pv_message SEPARATED BY
+'/'.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.                    " MAKE_MESSAGE_TABLE_2
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_LAST_DAY_OF_MONTHS</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_LV_LOW  text</font>
+<font color ="#0000FF">*      &lt;--P_LV_HIGH  text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_last_day_of_months  USING    pv_in
+                             CHANGING pv_out.
+  DATA: lv_in  LIKE sy-datum.
+  DATA: lv_out LIKE sy-datum.
+  lv_in = pv_in.
+
+  CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+    EXPORTING
+      day_in            = lv_in
+    IMPORTING
+      last_day_of_month = lv_out
+    EXCEPTIONS
+      day_in_no_date    = 1
+      OTHERS            = 2.
+  pv_out = lv_out.
+ENDFORM.                    " GET_LAST_DAY_OF_MONTHS
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_CHECKLIST</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  SET_FCAT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*      --&gt;P_0150   text</font>
+<font color ="#0000FF">*      --&gt;P_0151   text</font>
+<font color ="#0000FF">*      --&gt;P_0152   text</font>
+<font color ="#0000FF">*      --&gt;P_0153   text</font>
+<font color ="#0000FF">*      --&gt;P_0154   text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM set_fcat  USING    p_key p_field p_text p_ref_table p_edit.
+
+  gs_fieldcat-key       = p_key.
+  gs_fieldcat-fieldname = p_field.
+  gs_fieldcat-coltext   = p_text.
+  gs_fieldcat-ref_table = p_ref_table.
+  gs_fieldcat-edit      = p_edit.
+
+
+  CASE p_field.
+    WHEN 'CHECK'.
+      gs_fieldcat-checkbox = 'X'.
+
+  ENDCASE.
+
+
+  APPEND gs_fieldcat TO fieldcat.
+  CLEAR gs_fieldcat.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

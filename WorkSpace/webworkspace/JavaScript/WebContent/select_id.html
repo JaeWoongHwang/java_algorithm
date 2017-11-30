@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>DOM Basic</title>
+<style>
+</style>
+<script>
+	window.onload = function() {
+		//문서 객체를 선택
+		var header = document.getElementById('header');
+
+		//문서 객체를 조작
+		header.style.color = 'gold';
+		header.style.background = 'black';
+		header.innerHTML = 'From JavaScript';
+	};
+</script>
+</head>
+<body>
+	<h1 id="header">Header</h1>
+</html>

@@ -10,9 +10,6 @@
 <hr>
 <pre width="100">
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-<font color ="#0000FF">*&  Include           ZPPR0541_24_O01</font>
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*&  Include           ZPPR0540E01</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
 <font color ="#0000FF">*&---------------------------------------------------------------------*</font>
@@ -55,18 +52,6 @@ AT SELECTION-SCREEN OUTPUT.
 
 AT SELECTION-SCREEN.
   PERFORM SCREEN_MESSAGE.
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-<font color ="#0000FF">*& START-OF-SELECTION.</font>
-<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
-START-OF-SELECTION.
-
-  PERFORM CHECKING_DATA CHANGING GS_PARM-ERROR.
-  CHECK GS_PARM-ERROR IS INITIAL.
-
-  CHECK G_SUBRC &lt;&gt; 'E'.
-  PERFORM GET_EXCEL_DATA.
-  PERFORM DATE_CHECK.
-  PERFORM PROCESS_DATA.
 </pre>
 <hr>
 <font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
