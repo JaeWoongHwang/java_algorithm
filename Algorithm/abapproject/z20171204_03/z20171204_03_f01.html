@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20171204_03_F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20171204_03_F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include Z20171204_03_F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&  Include           Z20171204_03_F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  GET_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM get_data .
+
+<font color ="#0000FF">**  select *</font>
+<font color ="#0000FF">**    from SFLIGHT</font>
+<font color ="#0000FF">**    into corresponding fields of table gt_outtab.</font>
+<font color ="#0000FF">**</font>
+<font color ="#0000FF">***... Select Data</font>
+<font color ="#0000FF">**  select * from SCARR into corresponding fields of table gt_parent.</font>
+<font color ="#0000FF">**  select * from SFLIGHT into corresponding fields of table gt_child.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DISPLAY_DATA</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM display_data_simple .
+
+  DATA: gt_outtab TYPE TABLE OF sflight.
+  DATA: gr_table TYPE REF TO cl_salv_table.
+
+<font color ="#0000FF">*... Select Data</font>
+  SELECT * FROM sflight INTO CORRESPONDING FIELDS OF TABLE gt_outtab.
+
+<font color ="#0000FF">*... Create Instance</font>
+  CALL METHOD cl_salv_table=&gt;factory
+    IMPORTING
+      r_salv_table = gr_table
+    CHANGING
+      t_table      = gt_outtab.
+<font color ="#0000FF">*... Display Table</font>
+  gr_table-&gt;display( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DISPLAY_DATA_HIERARCHICAL</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM display_data_hierarchical .
+
+  DATA: gt_parent TYPE TABLE OF scarr.
+  DATA: gt_child TYPE TABLE OF sflight.
+  DATA: gr_table  TYPE REF TO cl_salv_hierseq_table.
+  DATA: lt_binding TYPE salv_t_hierseq_binding.
+  DATA: ls_binding TYPE salv_s_hierseq_binding.
+
+<font color ="#0000FF">*... Select Data</font>
+  SELECT * FROM scarr INTO CORRESPONDING FIELDS OF TABLE gt_parent.
+  SELECT * FROM sflight INTO CORRESPONDING FIELDS OF TABLE gt_child.
+
+<font color ="#0000FF">*... Bind Parent and Child Table</font>
+  ls_binding-master = 'CARRID'.
+  ls_binding-slave  = 'CARRID'.
+  APPEND ls_binding TO lt_binding.
+
+<font color ="#0000FF">*... Create Instance</font>
+  CALL METHOD cl_salv_hierseq_table=&gt;factory
+    EXPORTING
+      t_binding_level1_level2 = lt_binding
+    IMPORTING
+      r_hierseq               = gr_table
+    CHANGING
+      t_table_level1          = gt_parent
+      t_table_level2          = gt_child.
+
+<font color ="#0000FF">*... Display Table</font>
+  gr_table-&gt;display( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DISPLAY_DATA_TREE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM display_data_tree .
+
+  DATA: gt_outtab1 TYPE TABLE OF sflight,
+        gt_outtab2 TYPE TABLE OF sflight.
+  DATA: ls_outtab TYPE sflight.
+  DATA: gr_tree  TYPE REF TO cl_salv_tree.
+  DATA: nodes   TYPE REF TO cl_salv_nodes,
+        node    TYPE REF TO cl_salv_node,
+        columns TYPE REF TO cl_salv_columns.
+  DATA: key TYPE salv_de_node_key.
+
+<font color ="#0000FF">* Select Data</font>
+  SELECT * FROM sflight INTO CORRESPONDING FIELDS OF TABLE gt_outtab1 UP TO 5 ROWS.
+
+<font color ="#0000FF">* Create Instance with an Empty Table</font>
+  CALL METHOD cl_salv_tree=&gt;factory
+    IMPORTING
+      r_salv_tree = gr_tree
+    CHANGING
+      t_table     = gt_outtab2.
+
+<font color ="#0000FF">* Add the Nodes to the Tree</font>
+  nodes = gr_tree-&gt;get_nodes( ).
+  LOOP AT gt_outtab1 INTO ls_outtab.
+    TRY.
+        node = nodes-&gt;add_node( related_node = key
+                              relationship = cl_gui_column_tree=&gt;relat_first_child ).
+        node-&gt;set_data_row( ls_outtab ).
+        key = node-&gt;get_key( ).
+      CATCH cx_salv_msg.
+    ENDTRY.
+  ENDLOOP.
+
+  columns = gr_tree-&gt;get_columns( ).
+  columns-&gt;set_optimize( abap_true ).
+
+<font color ="#0000FF">*Display Table</font>
+  gr_tree-&gt;display( ).
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

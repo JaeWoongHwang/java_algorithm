@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20171204_02</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20171204_02</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Data type & Casting study program</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report Z20171204_02</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT z20171204_02.
+
+include <a href ="z20171204_02_cls.html">z20171204_02_cls</a>.
+
+<font color ="#0000FF">* Data Type Test</font>
+PERFORM data_type.
+
+<font color ="#0000FF">* Type Casting</font>
+PERFORM type_casting.
+
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  DATA_TYPE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM data_type .
+
+  DATA : gv_char TYPE yekms_field01.
+
+  DATA : ls_001 LIKE ytkms_001.
+  DATA : lv_field01 LIKE gv_char.
+
+
+  DATA : lv_time TYPE t.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  TYPE_CASTING</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM type_casting .
+
+  DATA oref TYPE REF TO object.
+  DATA oref1 TYPE REF TO z1.
+  DATA oref2 TYPE REF TO z2.
+  DATA oref3 TYPE REF TO z3.
+
+
+  oref1 = NEW z2( ).
+
+<font color ="#0000FF">* Up Casting</font>
+  oref = oref1.
+
+<font color ="#0000FF">* Down Casting</font>
+  IF oref IS INSTANCE OF z2.
+    oref2 ?= oref.
+  ENDIF.
+
+<font color ="#0000FF">* Down Casting With Exception</font>
+  TRY.
+      oref3 ?= oref2.
+    CATCH cx_sy_move_cast_error.
+<font color ="#0000FF">*    Message XXX</font>
+  ENDTRY.
+
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>

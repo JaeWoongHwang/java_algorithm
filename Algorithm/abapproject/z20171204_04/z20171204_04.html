@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>Z20171204_04</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: Z20171204_04</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Study of Data type</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report Z20171204_04</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT z20171204_04.
+
+START-OF-SELECTION.
+
+  MESSAGE '오류오류' TYPE 'X'.
+
+<font color ="#0000FF">**  perform internal_table.</font>
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Form  INTERNAL_TABLE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+<font color ="#0000FF">*  --&gt;  p1        text</font>
+<font color ="#0000FF">*  &lt;--  p2        text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+FORM internal_table .
+
+  DATA : ls_data LIKE bkpf.
+
+  DATA : lt_standard TYPE STANDARD TABLE OF bkpf.
+
+  DATA : lt_sorted1 TYPE SORTED TABLE OF bkpf WITH UNIQUE KEY belnr,
+         lt_sorted2 TYPE SORTED TABLE OF bkpf WITH NON-UNIQUE KEY belnr.
+
+  DATA : lt_hashed TYPE HASHED TABLE OF bkpf WITH UNIQUE KEY belnr.
+
+
+  SELECT *
+      INTO TABLE lt_sorted1
+    FROM bkpf
+   WHERE bukrs EQ '1000'
+      AND gjahr EQ '2017'.
+
+<font color ="#0000FF">* Read index</font>
+
+<font color ="#0000FF">* Loop</font>
+
+
+
+
+ENDFORM.
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Hard coded</font>
+<font color ="#0000FF">*   오류오류</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 750
+</font>
+</body>
+</html>
