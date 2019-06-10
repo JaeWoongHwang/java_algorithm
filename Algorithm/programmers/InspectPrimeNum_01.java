@@ -2,12 +2,12 @@ package programmers;
 
 import java.util.Scanner;
 
-public class InspectPrimeNum {
+public class InspectPrimeNum_01 {
 
 	public static void main(String[] args) {
-		// Check Prime Numbers
-		Scanner snr = new Scanner(System.in);
-		int testNum = snr.nextInt();
+		// Check Prime Numbers First Type
+		Scanner scan = new Scanner(System.in);
+		int testNum = scan.nextInt();
 		int i = 2, j = testNum - 1;
 
 		while (true) {
