@@ -10,24 +10,21 @@ public class AddPrimeNum {
 		Scanner scan = new Scanner(System.in);
 		System.out.println("Please input number");
 		int endNum = scan.nextInt();
-		
-		// Occured infinite loop
-		while (j <= endNum) {
-			if (i % j != 0) {
+		while (true) {
+			while (i % j != 0) {
 				j++;
-			} else {
 				if (i == j) {
-					System.out.println("Prime Number:" + i);
 					result += i;
-					continue;
+				}
+
+				if (i < endNum) {
+					i++;
 				} else {
-					j++;
-					continue;
+					System.out.print("Result :" + result);
+					break;
 				}
 			}
 		}
-		
-		System.out.print("Result :" + result);
 
 	}
 
